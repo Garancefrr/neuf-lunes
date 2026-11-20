@@ -1,0 +1,32 @@
+# Je peux manger ça ?
+
+Application web pour femme enceinte : on photographie la liste des ingrédients d'un produit ou la carte d'un restaurant, et l'application dit ce qui peut être mangé, avec prudence ou à éviter, selon les recommandations de Santé publique France (2025).
+
+## Contenu
+
+| Fichier | Rôle |
+|---|---|
+| `public/index.html` | La page de l'application (téléphone) |
+| `api/analyse.js` | Le petit serveur : vérifie le code d'accès, envoie les photos à Claude, renvoie le verdict. La clé API reste ici. |
+
+## Mise en ligne sur Vercel
+
+1. Sur vercel.com : **Add New** puis **Project**, et importer ce dépôt GitHub. Aucun réglage de compilation n'est nécessaire.
+2. Avant de cliquer sur **Deploy**, ouvrir **Environment Variables** et ajouter :
+
+| Nom | Valeur |
+|---|---|
+| `ANTHROPIC_API_KEY` | La clé créée sur console.anthropic.com (rubrique API Keys) |
+| `CODE_ACCES` | Un code au choix, à donner aux personnes qui utilisent l'appli |
+
+3. Cliquer sur **Deploy**. L'adresse obtenue (par exemple `je-peux-manger-ca.vercel.app`) est celle à envoyer.
+
+Pour changer le code d'accès plus tard : modifier `CODE_ACCES` dans Vercel (Settings, Environment Variables), puis relancer un déploiement.
+
+## Coût
+
+Chaque analyse est facturée par Anthropic sur la clé API, à l'usage. Il est conseillé de fixer une limite de dépense mensuelle dans console.anthropic.com (Settings, Limits).
+
+## Avertissement
+
+L'application aide à repérer les risques. Elle ne remplace pas l'avis d'une sage-femme ou d'un médecin.

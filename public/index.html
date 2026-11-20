@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Je peux manger ça ?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* Plan : une colonne mobile, outil d'abord (photo), verdict en gros avec pastille de couleur, détail ensuite. */
+:root{
+  --bg:#f3f5f7;
+  --surface:#ffffff;
+  --ink:#1b2a3a;
+  --muted:#5b6b7c;
+  --line:#dbe2ea;
+  --accent:#7a2e6b;        /* prune */
+  --accent-soft:#f4e8f1;
+  --ok:#1f7a4a; --ok-bg:#e3f4ea;
+  --warn:#9a5b00; --warn-bg:#fdf0d9;
+  --bad:#b3261e; --bad-bg:#fbe4e2;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#121820; --surface:#1b232d; --ink:#e8edf2; --muted:#9fb0c1; --line:#2c3846;
+    --accent:#e39bd2; --accent-soft:#3a2436;
+    --ok:#6fd39b; --ok-bg:#16301f; --warn:#f2bf5e; --warn-bg:#33270f; --bad:#ff8f86; --bad-bg:#3a1a18;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121820; --surface:#1b232d; --ink:#e8edf2; --muted:#9fb0c1; --line:#2c3846;
+  --accent:#e39bd2; --accent-soft:#3a2436;
+  --ok:#6fd39b; --ok-bg:#16301f; --warn:#f2bf5e; --warn-bg:#33270f; --bad:#ff8f86; --bad-bg:#3a1a18;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5}
+main{max-width:640px;margin:0 auto;padding:20px 16px 48px;display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:30px;font-weight:800;letter-spacing:-.01em}
+h2{font-size:20px;font-weight:600}
+h3{font-size:17px;font-weight:600}
+p{margin:0}
+.sub{color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.seg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:4px}
+.seg button{font:inherit;font-size:15px;border:0;background:transparent;color:var(--muted);padding:9px 4px;border-radius:9px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.btn{font:inherit;font-weight:700;border:0;border-radius:12px;padding:14px 16px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;text-align:center}
+.btn-primary{background:var(--accent);color:var(--surface)}
+.btn-ghost{background:var(--accent-soft);color:var(--accent)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>.btn{flex:1 1 140px}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.thumbs{display:flex;gap:8px;flex-wrap:wrap}
+.thumb{position:relative;width:84px;height:84px;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb button{position:absolute;top:4px;right:4px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;font-size:16px;line-height:1;cursor:pointer}
+textarea{width:100%;min-height:96px;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;resize:vertical}
+label.field{display:flex;flex-direction:column;gap:6px;font-weight:700;font-size:15px}
+select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px}
+.hidden{display:none !important}
+.status{color:var(--muted);font-size:15px;min-height:1.5em}
+.error{color:var(--bad);background:var(--bad-bg);border-radius:10px;padding:10px 12px;font-size:15px}
+.verdict{border-radius:14px;padding:16px;display:flex;gap:14px;align-items:flex-start}
+.verdict .dot{flex:0 0 46px;height:46px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:22px;color:var(--surface)}
+.v-ok{background:var(--ok-bg)} .v-ok .dot{background:var(--ok)} .v-ok .vlabel{color:var(--ok)}
+.v-prudence{background:var(--warn-bg)} .v-prudence .dot{background:var(--warn)} .v-prudence .vlabel{color:var(--warn)}
+.v-eviter{background:var(--bad-bg)} .v-eviter .dot{background:var(--bad)} .v-eviter .vlabel{color:var(--bad)}
+.vlabel{font-family:var(--display);font-weight:800;font-size:22px}
+.items{display:flex;flex-direction:column;gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.item{display:grid;grid-template-columns:6px 1fr;background:var(--surface)}
+.item+.item{border-top:1px solid var(--line)}
+.item .stripe{background:var(--muted)}
+.item.ok .stripe{background:var(--ok)} .item.prudence .stripe{background:var(--warn)} .item.eviter .stripe{background:var(--bad)}
+.item .body{padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+.item .top{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.pill{font-size:13px;font-weight:700;border-radius:999px;padding:2px 10px;white-space:nowrap}
+.pill.ok{background:var(--ok-bg);color:var(--ok)} .pill.prudence{background:var(--warn-bg);color:var(--warn)} .pill.eviter{background:var(--bad-bg);color:var(--bad)}
+.item .why{font-size:15px;color:var(--muted)}
+.item .tip{font-size:15px}
+ul.plain{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.tag{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:2px 8px;align-self:flex-start}
+.legal{font-size:14px;color:var(--muted)}
+.legal a{color:var(--accent)}
+details summary{cursor:pointer;font-weight:700}
+.history{display:flex;flex-direction:column;gap:6px}
+.hist{font:inherit;text-align:left;display:flex;justify-content:space-between;gap:10px;align-items:center;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--ink);cursor:pointer}
+@media (prefers-reduced-motion: no-preference){ .spin{display:inline-block;animation:sp 1s linear infinite} @keyframes sp{to{transform:rotate(360deg)}} }
+</style>
+</head>
+<body>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <h1>Je peux manger ça ?</h1>
+    <p class="sub">Photographie une liste d'ingrédients ou la carte d'un restaurant : l'appli te dit ce qui est compatible avec la grossesse, selon les recommandations de Santé publique France.</p>
+  </header>
+
+  <section class="card" aria-labelledby="t-profil">
+    <h2 id="t-profil">Ma situation</h2>
+    <label class="field" for="code">Code d'accès
+      <input id="code" type="password" autocomplete="off" style="font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px" placeholder="Le code qu'on t'a donné">
+    </label>
+    <label class="field" for="toxo">Toxoplasmose (voir ta prise de sang du début de grossesse)
+      <select id="toxo">
+        <option value="inconnu">Je ne sais pas</option>
+        <option value="non">Non immunisée</option>
+        <option value="immunisee">Immunisée</option>
+      </select>
+    </label>
+  </section>
+
+  <section class="card" aria-labelledby="t-analyse">
+    <h2 id="t-analyse">Que veux-tu vérifier ?</h2>
+    <div class="seg" role="group" aria-label="Type d'analyse">
+      <button type="button" id="m-produit" aria-pressed="true">Produit</button>
+      <button type="button" id="m-menu" aria-pressed="false">Restaurant</button>
+      <button type="button" id="m-texte" aria-pressed="false">Écrire</button>
+    </div>
+
+    <div id="zone-photo" class="col" style="display:flex;flex-direction:column;gap:10px">
+      <p class="sub" id="hint">Prends en photo la liste des ingrédients, bien à plat et lisible. Tu peux ajouter le nom du produit en 2e photo.</p>
+      <div class="row">
+        <button type="button" class="btn btn-primary" id="b-camera">Prendre une photo</button>
+        <button type="button" class="btn btn-ghost" id="b-galerie">Choisir dans la galerie</button>
+      </div>
+      <input type="file" id="f-camera" accept="image/*" capture="environment" class="hidden">
+      <input type="file" id="f-galerie" accept="image/*" multiple class="hidden">
+      <div class="thumbs" id="thumbs"></div>
+      <label class="field" for="precision">Précision (facultatif)
+        <textarea id="precision" style="min-height:60px" placeholder="Ex : le plat du jour est servi avec une sauce au roquefort"></textarea>
+      </label>
+    </div>
+
+    <div id="zone-texte" class="hidden" style="display:flex;flex-direction:column;gap:10px">
+      <label class="field" for="question">Décris le produit ou le plat
+        <textarea id="question" placeholder="Ex : burrata, tomates, pesto. Ou : est-ce que je peux manger un tiramisu ?"></textarea>
+      </label>
+    </div>
+
+    <button type="button" class="btn btn-primary" id="b-analyser" disabled>Analyser</button>
+    <p class="status" id="status" aria-live="polite"></p>
+    <div class="error hidden" id="error" role="alert"></div>
+  </section>
+
+  <section id="resultat" class="card" aria-live="polite"></section>
+
+  <section class="card hidden" id="bloc-historique" aria-labelledby="t-hist">
+    <h2 id="t-hist">Mes dernières vérifications</h2>
+    <div class="history" id="historique"></div>
+  </section>
+
+  <section class="card">
+    <details>
+      <summary>Les règles utilisées</summary>
+      <ul class="plain" style="margin-top:10px">
+        <li><strong>À éviter :</strong> alcool sous toutes ses formes (même cuit), lait cru, fromages à pâte molle (camembert, brie…) et à pâte pressée non cuite (reblochon, morbier), croûtes, fromage râpé en sachet, charcuterie prête à manger (jambon, pâtés, rillettes), saucisson et jambon sec, viande, poisson ou œufs crus ou peu cuits, sushis, poisson fumé ou mariné, coquillages crus, graines germées crues, soja, espadon, marlin, requin.</li>
+        <li><strong>Avec modération :</strong> caféine, thon, bar, dorade, lotte, raie, anguille, foie.</li>
+        <li><strong>Sans souci :</strong> fromages à pâte pressée cuite (comté, emmental, beaufort, parmesan), viandes et poissons bien cuits, fromage cuit jusqu'à être bien chaud, mayonnaise et desserts industriels, fruits et légumes bien lavés ou cuits.</li>
+      </ul>
+    </details>
+    <p class="legal">Cette appli aide à repérer les risques, elle ne remplace pas l'avis de ta sage-femme ou de ton médecin. En cas de doute, demande au serveur ou abstiens-toi. Source : <a href="https://www.sante.fr/node/7070507" target="_blank" rel="noopener">Santé publique France, 2025</a>.</p>
+  </section>
+</main>
+
+<script>
+(function(){
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const store = {
+    get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+    set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+  };
+
+  let mode = "produit";
+  let photos = []; // {blob, url}
+  let busy = false;
+
+  // ---------- Profil ----------
+  $("toxo").value = store.get("toxo", "inconnu");
+  $("toxo").addEventListener("change", () => store.set("toxo", $("toxo").value));
+  $("code").value = store.get("code", "");
+  $("code").addEventListener("change", () => store.set("code", $("code").value.trim()));
+
+  // ---------- Modes ----------
+  const hints = {
+    produit: "Prends en photo la liste des ingrédients, bien à plat et lisible. Tu peux ajouter le nom du produit en 2e photo.",
+    menu: "Prends en photo la carte (plusieurs pages possibles, jusqu'à 4 photos). L'appli classe chaque plat."
+  };
+  function setMode(m){
+    mode = m;
+    ["produit","menu","texte"].forEach(x => $("m-"+x).setAttribute("aria-pressed", String(x === m)));
+    $("zone-photo").classList.toggle("hidden", m === "texte");
+    $("zone-texte").classList.toggle("hidden", m !== "texte");
+    if (hints[m]) $("hint").textContent = hints[m];
+    refresh();
+  }
+  $("m-produit").onclick = () => setMode("produit");
+  $("m-menu").onclick = () => setMode("menu");
+  $("m-texte").onclick = () => setMode("texte");
+
+  // ---------- Photos ----------
+  $("b-camera").onclick = () => $("f-camera").click();
+  $("b-galerie").onclick = () => $("f-galerie").click();
+  $("f-camera").onchange = (e) => addFiles(e.target.files);
+  $("f-galerie").onchange = (e) => addFiles(e.target.files);
+  $("question").addEventListener("input", refresh);
+
+  async function shrink(file){
+    // Réduit l'image (côté max 1600 px) pour un envoi rapide
+    const url = URL.createObjectURL(file);
+    try{
+      const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+      const max = 1280, r = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.naturalWidth * r); c.height = Math.round(img.naturalHeight * r);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      const blob = await new Promise(res => c.toBlob(res, "image/jpeg", 0.8));
+      return blob || file;
+    } catch(e){ return file; }
+    finally { URL.revokeObjectURL(url); }
+  }
+  async function addFiles(list){
+    for (const f of Array.from(list || [])){
+      if (photos.length >= 4) break;
+      if (!f.type.startsWith("image/")) continue;
+      const blob = await shrink(f);
+      photos.push({ blob, url: URL.createObjectURL(blob) });
+    }
+    $("f-camera").value = ""; $("f-galerie").value = "";
+    drawThumbs(); refresh();
+  }
+  function drawThumbs(){
+    const t = $("thumbs"); t.innerHTML = "";
+    photos.forEach((p, i) => {
+      const d = document.createElement("div"); d.className = "thumb";
+      const im = document.createElement("img"); im.src = p.url; im.alt = "Photo " + (i+1);
+      const b = document.createElement("button"); b.type = "button"; b.textContent = "×"; b.setAttribute("aria-label", "Retirer la photo " + (i+1));
+      b.onclick = () => { URL.revokeObjectURL(p.url); photos.splice(i,1); drawThumbs(); refresh(); };
+      d.append(im, b); t.append(d);
+    });
+  }
+  function refresh(){
+    const ready = mode === "texte" ? $("question").value.trim().length > 2 : photos.length > 0;
+    $("b-analyser").disabled = busy || !ready;
+  }
+
+  // ---------- Analyse ----------
+  const toBase64 = (blob) => new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(String(r.result).split(",")[1]);
+    r.onerror = rej; r.readAsDataURL(blob);
+  });
+
+  async function analyser(){
+    if (busy) return;
+    $("error").classList.add("hidden");
+    const code = $("code").value.trim();
+    if (!code){ showError("Saisis le code d'accès en haut de la page."); $("code").focus(); return; }
+    store.set("code", code);
+    busy = true; refresh();
+    $("status").innerHTML = '<span class="spin" aria-hidden="true">◌</span> Lecture et analyse en cours, environ 15 secondes…';
+    try{
+      const images = mode === "texte" ? [] : await Promise.all(photos.map(p => toBase64(p.blob)));
+      const precision = mode === "texte" ? $("question").value.trim() : $("precision").value.trim();
+      const r = await fetch("/api/analyse", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ code, mode, toxo: $("toxo").value, precision, images })
+      });
+      let data = null;
+      try { data = await r.json(); } catch(e) {}
+      if (r.status === 413) throw new Error("Les photos sont trop lourdes. Envoie-en moins à la fois.");
+      if (!r.ok) throw new Error((data && data.erreur) || "Une erreur est survenue. Réessaie.");
+      data.mode = mode; data.date = new Date().toISOString();
+      afficher(data, false);
+      if (data.lisible !== false) sauver(data);
+      $("status").textContent = "";
+    } catch(e){
+      $("status").textContent = "";
+      showError(e && e.message && e.message !== "Failed to fetch" ? e.message : "Pas de connexion. Vérifie ton réseau et réessaie.");
+    } finally {
+      busy = false; refresh();
+    }
+  }
+  $("b-analyser").onclick = analyser;
+
+  function showError(msg){ const el = $("error"); el.textContent = msg; el.classList.remove("hidden"); }
+
+  // ---------- Affichage ----------
+  const LIB = { ok: "Tu peux en manger", prudence: "Avec prudence", eviter: "À éviter" };
+  const PILL = { ok: "OK", prudence: "Prudence", eviter: "À éviter" };
+  const ICON = { ok: "✓", prudence: "!", eviter: "✕" };
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+  const norm = (v) => (v === "ok" || v === "prudence" || v === "eviter") ? v : "prudence";
+
+  function afficher(d, exemple){
+    const r = $("resultat");
+    if (d.lisible === false){
+      r.innerHTML = `<h2>Photo difficile à lire</h2><p>${esc(d.resume || "Reprends la photo de plus près, sans reflet.")}</p>`;
+      return;
+    }
+    const v = norm(d.verdict);
+    const items = (d.elements || []).map(it => {
+      const iv = norm(it.verdict);
+      return `<div class="item ${iv}"><span class="stripe" aria-hidden="true"></span><div class="body">
+        <div class="top"><h3>${esc(it.nom)}</h3><span class="pill ${iv}">${PILL[iv]}</span></div>
+        ${it.raison ? `<p class="why">${esc(it.raison)}</p>` : ""}
+        ${it.conseil ? `<p class="tip">${esc(it.conseil)}</p>` : ""}
+      </div></div>`;
+    }).join("");
+    const liste = (titre, arr) => (arr && arr.length) ? `<div style="display:flex;flex-direction:column;gap:6px"><h3>${titre}</h3><ul class="plain">${arr.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : "";
+    r.innerHTML = `
+      ${exemple ? '<span class="tag">Exemple</span>' : ""}
+      <h2>${esc(d.titre || "Résultat")}</h2>
+      <div class="verdict v-${v}"><span class="dot" aria-hidden="true">${ICON[v]}</span>
+        <div style="display:flex;flex-direction:column;gap:4px"><span class="vlabel">${LIB[v]}</span><p>${esc(d.resume)}</p></div></div>
+      ${items ? `<div class="items">${items}</div>` : ""}
+      ${liste(d.mode === "menu" ? "Questions à poser au serveur" : "Questions à poser", d.questions)}
+      ${liste("À vérifier", d.a_verifier)}
+      ${exemple ? '<p class="sub">Prends une photo ci-dessus pour lancer ta propre vérification.</p>' : ""}`;
+    if (!exemple) r.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+  }
+
+  // ---------- Historique (sur ce téléphone uniquement) ----------
+  function sauver(d){
+    const h = store.get("historique", []);
+    h.unshift(d); store.set("historique", h.slice(0, 10));
+    dessinerHistorique();
+  }
+  function dessinerHistorique(){
+    const h = store.get("historique", []);
+    $("bloc-historique").classList.toggle("hidden", !h.length);
+    const box = $("historique"); box.innerHTML = "";
+    h.forEach(d => {
+      const v = norm(d.verdict);
+      const b = document.createElement("button"); b.type = "button"; b.className = "hist";
+      const date = new Date(d.date);
+      b.innerHTML = `<span>${esc(d.titre || "Analyse")}<br><span class="sub" style="font-size:13px">${isNaN(date) ? "" : date.toLocaleDateString("fr-FR", { day:"numeric", month:"short" })}</span></span><span class="pill ${v}">${PILL[v]}</span>`;
+      b.onclick = () => afficher(d, false);
+      box.append(b);
+    });
+  }
+
+  // ---------- État de départ ----------
+  afficher({
+    titre: "Tiramisu maison",
+    verdict: "eviter",
+    resume: "Le tiramisu fait maison contient des œufs crus et souvent de l'alcool : mieux vaut s'en passer pendant la grossesse.",
+    elements: [
+      { nom: "Œufs crus", verdict: "eviter", raison: "Risque de salmonellose.", conseil: "Un tiramisu industriel est à faible risque, s'il est sans alcool." },
+      { nom: "Marsala ou amaretto", verdict: "eviter", raison: "Aucune quantité d'alcool n'est sans risque pendant la grossesse.", conseil: "" },
+      { nom: "Mascarpone", verdict: "ok", raison: "Fromage pasteurisé.", conseil: "" },
+      { nom: "Café", verdict: "prudence", raison: "Contient de la caféine, à limiter.", conseil: "" }
+    ],
+    questions: ["Le tiramisu est-il fait maison ?", "Contient-il de l'alcool ?"],
+    a_verifier: [],
+    mode: "menu"
+  }, true);
+  dessinerHistorique();
+  refresh();
+
+})();
+</script>
+</body>
+</html>
