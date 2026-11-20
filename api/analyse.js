@@ -10,7 +10,7 @@ const MODES = ["produit", "menu", "beaute", "texte"];
 
 async function chercherProduit(baseUrl, codebarre) {
   try {
-    const r = await fetch(`${baseUrl}/api/v2/product/${codebarre}.json?fields=product_name,brands,ingredients_text,ingredients_text_fr`, {
+    const r = await fetch(`${baseUrl}/api/v2/product/${codebarre}.json?fields=product_name,brands,ingredients_text,ingredients_text_fr,image_front_small_url,image_front_url`, {
       headers: { "User-Agent": "JePeuxMangerCa/1.0 (application personnelle)" },
       signal: AbortSignal.timeout(6000),
     });
@@ -19,6 +19,38 @@ async function chercherProduit(baseUrl, codebarre) {
     return d && d.status === 1 ? d.product : null;
   } catch (e) {
     return null; // base indisponible : on continue avec la photo seule
+  }
+}
+
+const BASES = {
+  beaute: { nom: "Open Beauty Facts", url: "https://world.openbeautyfacts.org" },
+  aliment: { nom: "Open Food Facts", url: "https://world.openfoodfacts.org" },
+};
+
+// N'accepte que les photos hébergées par les bases Open Facts
+function photoSure(u) {
+  return typeof u === "string" && /^https:\/\/images\.open(beauty|food)facts\.org\/[\w\/.\-]+$/.test(u) ? u : null;
+}
+
+// Recherche d'un produit par son nom, pour illustrer une alternative
+async function chercherParNom(base, termes) {
+  try {
+    const q = new URLSearchParams({
+      search_terms: termes, search_simple: "1", action: "process", json: "1", page_size: "1",
+      fields: "code,product_name,brands,image_front_small_url",
+    });
+    const r = await fetch(`${base.url}/cgi/search.pl?${q}`, {
+      headers: { "User-Agent": "JePeuxMangerCa/1.0 (application personnelle)" },
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!r.ok) return null;
+    const d = await r.json();
+    const p = d && d.products && d.products[0];
+    const image = p && photoSure(p.image_front_small_url);
+    if (!image) return null;
+    return { image, lien: /^\d{8,14}$/.test(p.code || "") ? `${base.url}/product/${p.code}` : null, base: base.nom };
+  } catch (e) {
+    return null;
   }
 }
 
@@ -48,12 +80,10 @@ module.exports = async function handler(req, res) {
   let infoBase = "", source = null;
   const codebarre = String(body.codebarre || "");
   if (/^\d{8,14}$/.test(codebarre) && (mode === "beaute" || mode === "produit")) {
-    const base = mode === "beaute"
-      ? { nom: "Open Beauty Facts", url: "https://world.openbeautyfacts.org" }
-      : { nom: "Open Food Facts", url: "https://world.openfoodfacts.org" };
+    const base = mode === "beaute" ? BASES.beaute : BASES.aliment;
     const p = await chercherProduit(base.url, codebarre);
     if (p && (p.ingredients_text_fr || p.ingredients_text)) {
-      source = { base: base.nom, codebarre, lien: `${base.url}/product/${codebarre}` };
+      source = { base: base.nom, codebarre, lien: `${base.url}/product/${codebarre}`, image: photoSure(p.image_front_small_url || p.image_front_url), nom: [p.brands, p.product_name].filter(Boolean).join(" - ") || null };
       infoBase = `Données trouvées dans la base collaborative ${base.nom} pour le code-barres ${codebarre} (elles peuvent être incomplètes ou anciennes ; si une photo montre une liste d'ingrédients différente, la photo prime) :
 Nom : ${p.product_name || "inconnu"} ; marque : ${p.brands || "inconnue"}
 Ingrédients : ${(p.ingredients_text_fr || p.ingredients_text).slice(0, 4000)}`;
@@ -80,6 +110,17 @@ Ingrédients : ${(p.ingredients_text_fr || p.ingredients_text).slice(0, 4000)}`;
     const txt = (data.content || []).filter((c) => c.type === "text").map((c) => c.text).join("");
     const resultat = lireJSON(txt);
     if (source) resultat.source = source;
+
+    // Photos des alternatives qui citent un produit précis (3 au maximum, en parallèle)
+    if (Array.isArray(resultat.alternatives)) {
+      const base = (mode === "beaute" || resultat.categorie === "beaute") ? BASES.beaute : BASES.aliment;
+      await Promise.all(resultat.alternatives.slice(0, 3).map(async (a) => {
+        const termes = a && typeof a.recherche === "string" ? a.recherche.trim().slice(0, 100) : "";
+        if (termes.length < 3) return;
+        const trouve = await chercherParNom(base, termes);
+        if (trouve) Object.assign(a, trouve);
+      }));
+    }
     return res.status(200).json(resultat);
   } catch (e) {
     console.error(e);

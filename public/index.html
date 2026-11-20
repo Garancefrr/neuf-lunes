@@ -127,7 +127,13 @@ textarea.champ{min-height:120px;resize:vertical}
 .ligne strong{display:block;font-size:18px}
 .ligne p{font-size:16px;color:var(--muted)}
 .ligne p.conseil{color:var(--ink)}
-.alt{background:var(--surface);border-radius:18px;padding:14px 16px;border-left:5px solid var(--accent)}
+.alt{background:var(--surface);border-radius:18px;padding:14px 16px;border-left:5px solid var(--accent);display:flex;gap:14px;align-items:center}
+.alt img,.produit img{width:64px;height:64px;object-fit:contain;border-radius:12px;background:#fff;flex:0 0 64px}
+.alt .txt{flex:1;min-width:0}
+.alt a,.produit a{color:var(--accent);font-size:14px;font-weight:700}
+.produit{display:flex;gap:14px;align-items:center}
+.produit img{width:76px;height:76px;flex-basis:76px}
+.credit{font-size:13px;color:var(--muted)}
 .alt strong{display:block}
 .alt p{font-size:16px;color:var(--muted)}
 ul.simple{margin:0;padding:0 0 0 20px;display:flex;flex-direction:column;gap:6px}
@@ -532,6 +538,13 @@ details ul{margin-top:10px}
     return '<div class="ligne ' + v + '"><span class="pt" aria-label="' + ({ ok:"OK", prudence:"Prudence", eviter:"À éviter" }[v]) + '"></span><div><strong>' + esc(it.nom) + '</strong>' +
       (it.raison ? '<p>' + esc(it.raison) + '</p>' : '') + (it.conseil ? '<p class="conseil">' + esc(it.conseil) + '</p>' : '') + '</div></div>';
   }
+  function sure(u){ return (typeof u === "string" && /^https:\/\/images\.open(beauty|food)facts\.org\//.test(u)) ? u : null; }
+  function carteAlt(a){
+    var img = sure(a.image), lien = (typeof a.lien === "string" && /^https:\/\/world\.open(beauty|food)facts\.org\//.test(a.lien)) ? a.lien : null;
+    return '<div class="alt">' + (img ? '<img src="' + esc(img) + '" alt="" loading="lazy">' : '') +
+      '<div class="txt"><strong>' + esc(a.nom) + '</strong>' + (a.pourquoi ? '<p>' + esc(a.pourquoi) + '</p>' : '') +
+      (lien ? '<a href="' + esc(lien) + '" target="_blank" rel="noopener">Voir la fiche</a>' : '') + '</div></div>';
+  }
   function liste(titre, arr){
     return (arr && arr.length) ? '<div class="bloc"><h2>' + titre + '</h2><div class="carte"><ul class="simple">' + arr.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join("") + '</ul></div></div>' : "";
   }
@@ -552,18 +565,20 @@ details ul{margin-top:10px}
       });
       html += liste("Questions à poser au serveur", d.questions);
     } else {
-      html += '<div class="verdict v-' + v + '"><span class="rond">' + ICONES[v] + '</span>' +
-        (d.titre ? '<span class="quoi">' + esc(d.titre) + '</span>' : '') +
+      var photoProduit = d.source && sure(d.source.image);
+      html += '<div class="verdict v-' + v + '">' +
+        (photoProduit ? '<div class="produit"><img src="' + esc(photoProduit) + '" alt="Photo du produit"><span class="rond">' + ICONES[v] + '</span></div>' : '<span class="rond">' + ICONES[v] + '</span>') +
+        ((d.source && d.source.nom) || d.titre ? '<span class="quoi">' + esc((d.source && d.source.nom) || d.titre) + '</span>' : '') +
         '<span class="mot">' + mots(v, d) + '</span><p>' + esc(d.resume) + '</p></div>';
       if (d.alternatives && d.alternatives.length){
-        html += '<div class="bloc"><h2>' + (v === "ok" ? "Autres idées" : "À la place, essaie") + '</h2>' +
-          d.alternatives.map(function(a){ return '<div class="alt"><strong>' + esc(a.nom) + '</strong>' + (a.pourquoi ? '<p>' + esc(a.pourquoi) + '</p>' : '') + '</div>'; }).join("") + '</div>';
+        html += '<div class="bloc"><h2>' + (v === "ok" ? "Autres idées" : "À la place, essaie") + '</h2>' + d.alternatives.map(carteAlt).join("") + '</div>';
+        if (d.alternatives.some(function(a){ return a.image; })) html += '<p class="credit">Photos : bases collaboratives Open Food Facts et Open Beauty Facts. Vérifie toujours la liste des ingrédients sur l\'emballage, les formules changent.</p>';
       }
       if (el.length) html += '<div class="bloc"><h2>Le détail</h2>' + el.map(ligne).join("") + '</div>';
       html += liste("Questions à poser", d.questions);
     }
     if (d.mode === "menu" && d.alternatives && d.alternatives.length){
-      html += '<div class="bloc"><h2>Bonnes idées sur cette carte</h2>' + d.alternatives.map(function(a){ return '<div class="alt"><strong>' + esc(a.nom) + '</strong>' + (a.pourquoi ? '<p>' + esc(a.pourquoi) + '</p>' : '') + '</div>'; }).join("") + '</div>';
+      html += '<div class="bloc"><h2>Bonnes idées sur cette carte</h2>' + d.alternatives.map(carteAlt).join("") + '</div>';
     }
     html += liste("À vérifier", d.a_verifier);
     if (d.source && d.source.base){
