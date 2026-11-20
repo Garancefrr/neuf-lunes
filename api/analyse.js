@@ -8,6 +8,20 @@ const MODELE = "claude-sonnet-5-5";
 const MAX_PHOTOS = 4;
 const MODES = ["produit", "menu", "beaute", "texte"];
 
+async function chercherProduit(baseUrl, codebarre) {
+  try {
+    const r = await fetch(`${baseUrl}/api/v2/product/${codebarre}.json?fields=product_name,brands,ingredients_text,ingredients_text_fr`, {
+      headers: { "User-Agent": "JePeuxMangerCa/1.0 (application personnelle)" },
+      signal: AbortSignal.timeout(6000),
+    });
+    if (!r.ok) return null;
+    const d = await r.json();
+    return d && d.status === 1 ? d.product : null;
+  } catch (e) {
+    return null; // base indisponible : on continue avec la photo seule
+  }
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ erreur: "Méthode non autorisée." });
 
@@ -30,8 +44,26 @@ module.exports = async function handler(req, res) {
   if (mode !== "texte" && photos.length === 0) return res.status(400).json({ erreur: "Ajoute au moins une photo." });
   if (mode === "texte" && texte.trim().length < 3) return res.status(400).json({ erreur: "Écris ta question." });
 
+  // Code-barres lu sur la photo : on cherche les ingrédients dans la base publique correspondante
+  let infoBase = "", source = null;
+  const codebarre = String(body.codebarre || "");
+  if (/^\d{8,14}$/.test(codebarre) && (mode === "beaute" || mode === "produit")) {
+    const base = mode === "beaute"
+      ? { nom: "Open Beauty Facts", url: "https://world.openbeautyfacts.org" }
+      : { nom: "Open Food Facts", url: "https://world.openfoodfacts.org" };
+    const p = await chercherProduit(base.url, codebarre);
+    if (p && (p.ingredients_text_fr || p.ingredients_text)) {
+      source = { base: base.nom, codebarre, lien: `${base.url}/product/${codebarre}` };
+      infoBase = `Données trouvées dans la base collaborative ${base.nom} pour le code-barres ${codebarre} (elles peuvent être incomplètes ou anciennes ; si une photo montre une liste d'ingrédients différente, la photo prime) :
+Nom : ${p.product_name || "inconnu"} ; marque : ${p.brands || "inconnue"}
+Ingrédients : ${(p.ingredients_text_fr || p.ingredients_text).slice(0, 4000)}`;
+    } else {
+      infoBase = `Le code-barres ${codebarre} a été lu mais le produit n'a pas d'ingrédients dans la base ${base.nom}. Si les photos ne montrent pas la liste des ingrédients, renvoie "lisible": false et demande, dans "resume", de prendre en photo la liste des ingrédients.`;
+    }
+  }
+
   const contenu = photos.map((data) => ({ type: "image", source: { type: "base64", media_type: "image/jpeg", data } }));
-  contenu.push({ type: "text", text: construireConsigne(mode, toxo, texte) });
+  contenu.push({ type: "text", text: construireConsigne(mode, toxo, texte, infoBase) });
 
   try {
     const r = await fetch("https://api.anthropic.com/v1/messages", {
@@ -46,7 +78,9 @@ module.exports = async function handler(req, res) {
       return res.status(502).json({ erreur: msg });
     }
     const txt = (data.content || []).filter((c) => c.type === "text").map((c) => c.text).join("");
-    return res.status(200).json(lireJSON(txt));
+    const resultat = lireJSON(txt);
+    if (source) resultat.source = source;
+    return res.status(200).json(resultat);
   } catch (e) {
     console.error(e);
     return res.status(500).json({ erreur: "La réponse n'a pas pu être lue. Réessaie avec une photo plus nette." });

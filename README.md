@@ -1,6 +1,6 @@
 # Je peux manger ça ?
 
-Application web pour femme enceinte : on photographie la liste des ingrédients d'un aliment, la carte d'un restaurant ou la liste d'ingrédients d'un produit de beauté. L'application dit ce qui est sans souci, avec prudence ou à éviter, et propose des alternatives. Règles : Santé publique France (2025) pour l'alimentation, ANSM pour les cosmétiques.
+Application web pour femme enceinte : on photographie la liste des ingrédients d'un aliment, la carte d'un restaurant ou la liste d'ingrédients d'un produit de beauté. L'application dit ce qui est sans souci, avec prudence ou à éviter, et propose des alternatives. Pour les aliments et les cosmétiques, une photo du code-barres suffit : les ingrédients sont recherchés dans les bases publiques Open Food Facts et Open Beauty Facts. Règles : Santé publique France (2025) pour l'alimentation, ANSM pour les cosmétiques.
 
 ## Contenu
 

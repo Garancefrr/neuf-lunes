@@ -180,7 +180,7 @@ details ul{margin-top:10px}
   <div class="tuiles" id="tuiles">
     <button type="button" class="tuile t1" data-mode="produit">
       <span class="ico"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9h18l-2 11H5L3 9z"/><path d="M8 9l4-6 4 6"/><path d="M9 13v4M15 13v4"/></svg></span>
-      <span><strong>Un aliment</strong><span class="d">Photo des ingrédients</span></span>
+      <span><strong>Un aliment</strong><span class="d">Photo des ingrédients<span class="si-api"> ou du code-barres</span></span></span>
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
     </button>
     <button type="button" class="tuile t2" data-mode="menu">
@@ -190,7 +190,7 @@ details ul{margin-top:10px}
     </button>
     <button type="button" class="tuile t3" data-mode="beaute">
       <span class="ico"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6v3H9z"/><path d="M8 6h8l1 3v10a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V9l1-3z"/><path d="M10 13h4"/></svg></span>
-      <span><strong>Un soin, un maquillage</strong><span class="d">Photo de la liste d'ingrédients</span></span>
+      <span><strong>Un soin, un maquillage</strong><span class="d">Photo des ingrédients<span class="si-api"> ou du code-barres</span></span></span>
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
     </button>
     <button type="button" class="ecrire" id="b-ecrire">
@@ -323,7 +323,7 @@ details ul{margin-top:10px}
 
   // ---------- Profil ----------
   var avecCode = BACKEND === "api";
-  if (!avecCode) document.querySelectorAll(".code-bloc").forEach(function(e){ e.classList.add("hidden"); });
+  if (!avecCode) document.querySelectorAll(".code-bloc, .si-api").forEach(function(e){ e.classList.add("hidden"); });
   function toxo(){ return store.get("toxo", null); }
   function majPuces(){
     document.querySelectorAll("[data-toxo]").forEach(function(b){ b.setAttribute("aria-pressed", String(b.dataset.toxo === (choixToxo || toxo()))); });
@@ -355,9 +355,9 @@ details ul{margin-top:10px}
 
   // ---------- Photos ----------
   var textes = {
-    produit: { titre: "Ton aliment", aide: "Vérifie que la liste des ingrédients est bien lisible. Tu peux ajouter une photo du nom du produit." },
+    produit: { titre: "Ton aliment", aide: avecCode ? "Une photo nette du code-barres ou de la liste des ingrédients suffit." : "Vérifie que la liste des ingrédients est bien lisible. Tu peux ajouter une photo du nom du produit." },
     menu: { titre: "La carte", aide: "Ajoute toutes les pages de la carte, jusqu'à 4 photos." },
-    beaute: { titre: "Ton produit", aide: "Cadre bien la liste des ingrédients (souvent au dos, après « Ingredients »)." }
+    beaute: { titre: "Ton produit", aide: avecCode ? "Une photo nette du code-barres ou de la liste des ingrédients suffit." : "Cadre bien la liste des ingrédients (souvent au dos, après « Ingredients »)." }
   };
   document.querySelectorAll(".tuile").forEach(function(t){
     t.onclick = function(){ mode = t.dataset.mode; photos = []; $("precision").value = ""; $("f-photo").click(); };
@@ -431,13 +431,45 @@ details ul{margin-top:10px}
   function enBase64(blob){
     return new Promise(function(res, rej){ var r = new FileReader(); r.onload = function(){ res(String(r.result).split(",")[1]); }; r.onerror = rej; r.readAsDataURL(blob); });
   }
+  // Lecture du code-barres dans les photos (aliments et cosmétiques, version en ligne)
+  var zxing = null;
+  function chargerZxing(){
+    if (zxing) return zxing;
+    zxing = new Promise(function(res, rej){
+      var sc = document.createElement("script");
+      sc.src = "https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js";
+      sc.onload = function(){ res(window.ZXing); }; sc.onerror = rej;
+      document.head.append(sc);
+    });
+    return zxing;
+  }
+  async function lireCodeBarre(blobs){
+    for (var i = 0; i < blobs.length; i++){
+      try {
+        if ("BarcodeDetector" in window){
+          var det = new window.BarcodeDetector({ formats: ["ean_13", "ean_8", "upc_a", "upc_e"] });
+          var bmp = await createImageBitmap(blobs[i]);
+          var trouves = await det.detect(bmp);
+          if (trouves.length) return trouves[0].rawValue;
+          continue;
+        }
+        var Z = await chargerZxing();
+        var url = URL.createObjectURL(blobs[i]);
+        try { var r = await new Z.BrowserMultiFormatReader().decodeFromImageUrl(url); if (r) return r.getText(); }
+        catch(e) {} finally { URL.revokeObjectURL(url); }
+      } catch(e) {}
+    }
+    return null;
+  }
+
   async function demander(m, precision){
     var blobs = m === "texte" ? [] : photos.map(function(p){ return p.blob; });
     if (BACKEND === "api"){
+      var codebarre = (m === "beaute" || m === "produit") ? await lireCodeBarre(blobs) : null;
       var images = await Promise.all(blobs.map(enBase64));
       var r = await fetch("/api/analyse", {
         method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ code: store.get("code", ""), mode: m, toxo: toxo(), precision: precision, images: images })
+        body: JSON.stringify({ code: store.get("code", ""), mode: m, toxo: toxo(), precision: precision, images: images, codebarre: codebarre })
       });
       var data = null; try { data = await r.json(); } catch(e) {}
       if (r.status === 413) throw new Error("Les photos sont trop lourdes. Envoie-en moins à la fois.");
@@ -534,6 +566,9 @@ details ul{margin-top:10px}
       html += '<div class="bloc"><h2>Bonnes idées sur cette carte</h2>' + d.alternatives.map(function(a){ return '<div class="alt"><strong>' + esc(a.nom) + '</strong>' + (a.pourquoi ? '<p>' + esc(a.pourquoi) + '</p>' : '') + '</div>'; }).join("") + '</div>';
     }
     html += liste("À vérifier", d.a_verifier);
+    if (d.source && d.source.base){
+      html += '<p class="note">Ingrédients trouvés grâce au code-barres ' + esc(d.source.codebarre) + ', dans la base <a href="' + esc(d.source.lien) + '" target="_blank" rel="noopener">' + esc(d.source.base) + '</a>.</p>';
+    }
     html += '<p class="note">En cas de doute, demande à ta sage-femme ou à ton pharmacien.</p>';
     r.innerHTML = html;
   }
