@@ -1,6 +1,6 @@
 # Je peux manger ça ?
 
-Application web pour femme enceinte : on photographie la liste des ingrédients d'un produit ou la carte d'un restaurant, et l'application dit ce qui peut être mangé, avec prudence ou à éviter, selon les recommandations de Santé publique France (2025).
+Application web pour femme enceinte : on photographie la liste des ingrédients d'un aliment, la carte d'un restaurant ou la liste d'ingrédients d'un produit de beauté. L'application dit ce qui est sans souci, avec prudence ou à éviter, et propose des alternatives. Règles : Santé publique France (2025) pour l'alimentation, ANSM pour les cosmétiques.
 
 ## Contenu
 
@@ -8,6 +8,7 @@ Application web pour femme enceinte : on photographie la liste des ingrédients 
 |---|---|
 | `public/index.html` | La page de l'application (téléphone) |
 | `api/analyse.js` | Le petit serveur : vérifie le code d'accès, envoie les photos à Claude, renvoie le verdict. La clé API reste ici. |
+| `api/_consigne.js` | Les règles (aliments, cosmétiques, alternatives) envoyées à Claude |
 
 ## Mise en ligne sur Vercel
 

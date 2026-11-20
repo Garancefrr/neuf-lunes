@@ -3,370 +3,562 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#eef2ec">
 <title>Je peux manger ça ?</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
 <style>
-/* Plan : une colonne mobile, outil d'abord (photo), verdict en gros avec pastille de couleur, détail ensuite. */
+/* Plan : un écran à la fois. Accueil = 3 grosses tuiles ; une photo ; un verdict en très grand. */
 :root{
-  --bg:#f3f5f7;
+  --bg:#eef2ec;
   --surface:#ffffff;
-  --ink:#1b2a3a;
-  --muted:#5b6b7c;
-  --line:#dbe2ea;
-  --accent:#7a2e6b;        /* prune */
-  --accent-soft:#f4e8f1;
-  --ok:#1f7a4a; --ok-bg:#e3f4ea;
-  --warn:#9a5b00; --warn-bg:#fdf0d9;
-  --bad:#b3261e; --bad-bg:#fbe4e2;
+  --ink:#17251e;
+  --muted:#5b6a61;
+  --line:#d7e0d8;
+  --accent:#2f5d4a;
+  --on-accent:#ffffff;
+  --t1:#ffe2c9; --t1-ink:#8a4510;
+  --t2:#dbe7ff; --t2-ink:#244a8f;
+  --t3:#ffdce5; --t3-ink:#9a2a50;
+  --ok:#1e7a49; --ok-bg:#dff3e7;
+  --warn:#9a5a00; --warn-bg:#fdefd5;
+  --bad:#b4261e; --bad-bg:#fbe2df;
   --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --r:22px;
   color-scheme:light;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#121820; --surface:#1b232d; --ink:#e8edf2; --muted:#9fb0c1; --line:#2c3846;
-    --accent:#e39bd2; --accent-soft:#3a2436;
-    --ok:#6fd39b; --ok-bg:#16301f; --warn:#f2bf5e; --warn-bg:#33270f; --bad:#ff8f86; --bad-bg:#3a1a18;
+    --bg:#0f1613; --surface:#18221d; --ink:#e6eee8; --muted:#9aaba1; --line:#28352e;
+    --accent:#8fd1b2; --on-accent:#0f1613;
+    --t1:#3b2817; --t1-ink:#ffc58f; --t2:#1b2840; --t2-ink:#a9c6ff; --t3:#3b1d28; --t3-ink:#ffadc4;
+    --ok:#74d6a0; --ok-bg:#15301f; --warn:#f3c066; --warn-bg:#33270e; --bad:#ff948a; --bad-bg:#3b1a17;
     color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#121820; --surface:#1b232d; --ink:#e8edf2; --muted:#9fb0c1; --line:#2c3846;
-  --accent:#e39bd2; --accent-soft:#3a2436;
-  --ok:#6fd39b; --ok-bg:#16301f; --warn:#f2bf5e; --warn-bg:#33270f; --bad:#ff8f86; --bad-bg:#3a1a18;
+  --bg:#0f1613; --surface:#18221d; --ink:#e6eee8; --muted:#9aaba1; --line:#28352e;
+  --accent:#8fd1b2; --on-accent:#0f1613;
+  --t1:#3b2817; --t1-ink:#ffc58f; --t2:#1b2840; --t2-ink:#a9c6ff; --t3:#3b1d28; --t3-ink:#ffadc4;
+  --ok:#74d6a0; --ok-bg:#15301f; --warn:#f3c066; --warn-bg:#33270e; --bad:#ff948a; --bad-bg:#3b1a17;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
-html,body{margin:0}
-body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5}
-main{max-width:640px;margin:0 auto;padding:20px 16px 48px;display:flex;flex-direction:column;gap:18px}
-h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.15}
-h1{font-size:30px;font-weight:800;letter-spacing:-.01em}
-h2{font-size:20px;font-weight:600}
-h3{font-size:17px;font-weight:600}
+html,body{margin:0;min-height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:18px;line-height:1.45;-webkit-tap-highlight-color:transparent}
+main{max-width:520px;margin:0 auto;padding:22px 18px 40px}
+h1,h2,h3{font-family:var(--display);margin:0;line-height:1.1;text-wrap:balance}
 p{margin:0}
-.sub{color:var(--muted)}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px}
-.seg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:4px}
-.seg button{font:inherit;font-size:15px;border:0;background:transparent;color:var(--muted);padding:9px 4px;border-radius:9px;cursor:pointer}
-.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.12)}
-.btn{font:inherit;font-weight:700;border:0;border-radius:12px;padding:14px 16px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;text-align:center}
-.btn-primary{background:var(--accent);color:var(--surface)}
-.btn-ghost{background:var(--accent-soft);color:var(--accent)}
-.btn:disabled{opacity:.5;cursor:not-allowed}
-.row{display:flex;gap:10px;flex-wrap:wrap}
-.row>.btn{flex:1 1 140px}
-button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-.thumbs{display:flex;gap:8px;flex-wrap:wrap}
-.thumb{position:relative;width:84px;height:84px;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
-.thumb img{width:100%;height:100%;object-fit:cover;display:block}
-.thumb button{position:absolute;top:4px;right:4px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;font-size:16px;line-height:1;cursor:pointer}
-textarea{width:100%;min-height:96px;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;resize:vertical}
-label.field{display:flex;flex-direction:column;gap:6px;font-weight:700;font-size:15px}
-select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 .hidden{display:none !important}
-.status{color:var(--muted);font-size:15px;min-height:1.5em}
-.error{color:var(--bad);background:var(--bad-bg);border-radius:10px;padding:10px 12px;font-size:15px}
-.verdict{border-radius:14px;padding:16px;display:flex;gap:14px;align-items:flex-start}
-.verdict .dot{flex:0 0 46px;height:46px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:22px;color:var(--surface)}
-.v-ok{background:var(--ok-bg)} .v-ok .dot{background:var(--ok)} .v-ok .vlabel{color:var(--ok)}
-.v-prudence{background:var(--warn-bg)} .v-prudence .dot{background:var(--warn)} .v-prudence .vlabel{color:var(--warn)}
-.v-eviter{background:var(--bad-bg)} .v-eviter .dot{background:var(--bad)} .v-eviter .vlabel{color:var(--bad)}
-.vlabel{font-family:var(--display);font-weight:800;font-size:22px}
-.items{display:flex;flex-direction:column;gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
-.item{display:grid;grid-template-columns:6px 1fr;background:var(--surface)}
-.item+.item{border-top:1px solid var(--line)}
-.item .stripe{background:var(--muted)}
-.item.ok .stripe{background:var(--ok)} .item.prudence .stripe{background:var(--warn)} .item.eviter .stripe{background:var(--bad)}
-.item .body{padding:10px 12px;display:flex;flex-direction:column;gap:4px}
-.item .top{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
-.pill{font-size:13px;font-weight:700;border-radius:999px;padding:2px 10px;white-space:nowrap}
-.pill.ok{background:var(--ok-bg);color:var(--ok)} .pill.prudence{background:var(--warn-bg);color:var(--warn)} .pill.eviter{background:var(--bad-bg);color:var(--bad)}
-.item .why{font-size:15px;color:var(--muted)}
-.item .tip{font-size:15px}
-ul.plain{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
-.tag{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:2px 8px;align-self:flex-start}
-.legal{font-size:14px;color:var(--muted)}
-.legal a{color:var(--accent)}
+.ecran{display:flex;flex-direction:column;gap:18px}
+.muted{color:var(--muted)}
+.small{font-size:15px}
+
+/* En-tête */
+.tete{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.marque{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:17px}
+.marque svg{flex:0 0 auto}
+.lien{background:none;border:0;padding:8px 0;color:var(--accent);font-weight:700;font-size:16px}
+.titre{font-size:40px;font-weight:800;letter-spacing:-.02em}
+
+/* Tuiles */
+.tuiles{display:grid;gap:12px}
+.tuile{display:grid;grid-template-columns:64px 1fr 24px;align-items:center;gap:14px;border:0;border-radius:var(--r);padding:18px;text-align:left;min-height:96px;transition:transform .12s ease}
+.tuile:active{transform:scale(.98)}
+.tuile .ico{width:64px;height:64px;border-radius:18px;display:grid;place-items:center;background:rgba(255,255,255,.55)}
+.tuile strong{display:block;font-family:var(--display);font-size:23px;font-weight:700;line-height:1.1}
+.tuile span.d{display:block;font-size:15px;opacity:.85;margin-top:3px}
+.tuile.t1{background:var(--t1);color:var(--t1-ink)}
+.tuile.t2{background:var(--t2);color:var(--t2-ink)}
+.tuile.t3{background:var(--t3);color:var(--t3-ink)}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .tuile .ico{background:rgba(255,255,255,.07)} }
+:root[data-theme="dark"] .tuile .ico{background:rgba(255,255,255,.07)}
+.ecrire{display:flex;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--line);background:transparent;border-radius:var(--r);padding:14px;color:var(--muted);font-weight:700}
+
+/* Cartes */
+.carte{background:var(--surface);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:12px}
+.puces{display:flex;flex-wrap:wrap;gap:8px}
+.puce{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 16px;font-size:16px}
+.puce[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:700}
+input.champ,textarea.champ{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:14px;padding:12px 14px}
+textarea.champ{min-height:120px;resize:vertical}
+
+/* Boutons */
+.btn{border:0;border-radius:18px;padding:17px 18px;font-weight:700;font-size:18px;display:flex;align-items:center;justify-content:center;gap:10px;width:100%}
+.btn.plein{background:var(--accent);color:var(--on-accent)}
+.btn.doux{background:var(--surface);color:var(--ink)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.retour{align-self:flex-start;background:var(--surface);border:0;border-radius:999px;padding:8px 16px 8px 10px;display:flex;align-items:center;gap:6px;font-weight:700;font-size:16px}
+
+/* Photos */
+.vignettes{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.vignette{position:relative;aspect-ratio:3/4;border-radius:18px;overflow:hidden;background:var(--surface)}
+.vignette img{width:100%;height:100%;object-fit:cover;display:block}
+.vignette button{position:absolute;top:8px;right:8px;width:34px;height:34px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;font-size:20px;line-height:1}
+.ajout{aspect-ratio:3/4;border-radius:18px;border:2px dashed var(--line);background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--muted);font-weight:700;font-size:16px}
+
+/* Attente */
+.attente{min-height:60vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;text-align:center}
+.points{display:flex;gap:10px}
+.points i{width:14px;height:14px;border-radius:50%;background:var(--accent);opacity:.35}
+@media (prefers-reduced-motion: no-preference){
+  .points i{animation:pt 1.2s ease-in-out infinite}
+  .points i:nth-child(2){animation-delay:.15s} .points i:nth-child(3){animation-delay:.3s}
+  @keyframes pt{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:1;transform:translateY(-8px)}}
+}
+
+/* Verdict */
+.verdict{border-radius:28px;padding:26px 22px;display:flex;flex-direction:column;gap:12px}
+.verdict .rond{width:62px;height:62px;border-radius:50%;display:grid;place-items:center;color:var(--surface)}
+.verdict .mot{font-family:var(--display);font-size:40px;font-weight:800;letter-spacing:-.02em;line-height:1}
+.verdict .quoi{font-weight:700;font-size:16px;opacity:.8}
+.v-ok{background:var(--ok-bg)} .v-ok .rond{background:var(--ok)} .v-ok .mot{color:var(--ok)}
+.v-prudence{background:var(--warn-bg)} .v-prudence .rond{background:var(--warn)} .v-prudence .mot{color:var(--warn)}
+.v-eviter{background:var(--bad-bg)} .v-eviter .rond{background:var(--bad)} .v-eviter .mot{color:var(--bad)}
+.bloc{display:flex;flex-direction:column;gap:10px}
+.bloc h2{font-size:21px;font-weight:700}
+.ligne{background:var(--surface);border-radius:18px;padding:14px 16px;display:grid;grid-template-columns:12px 1fr;gap:12px;align-items:start}
+.ligne .pt{width:12px;height:12px;border-radius:50%;margin-top:7px;background:var(--muted)}
+.ligne.ok .pt{background:var(--ok)} .ligne.prudence .pt{background:var(--warn)} .ligne.eviter .pt{background:var(--bad)}
+.ligne strong{display:block;font-size:18px}
+.ligne p{font-size:16px;color:var(--muted)}
+.ligne p.conseil{color:var(--ink)}
+.alt{background:var(--surface);border-radius:18px;padding:14px 16px;border-left:5px solid var(--accent)}
+.alt strong{display:block}
+.alt p{font-size:16px;color:var(--muted)}
+ul.simple{margin:0;padding:0 0 0 20px;display:flex;flex-direction:column;gap:6px}
+
+/* Historique */
+.histo{display:flex;flex-direction:column;gap:8px}
+.histo button{display:flex;align-items:center;gap:12px;background:var(--surface);border:0;border-radius:16px;padding:12px 14px;text-align:left}
+.histo .pt{width:12px;height:12px;border-radius:50%;flex:0 0 12px}
+.histo .pt.ok{background:var(--ok)} .histo .pt.prudence{background:var(--warn)} .histo .pt.eviter{background:var(--bad)}
+.histo .nm{flex:1;font-size:16px}
+.histo .dt{font-size:14px;color:var(--muted)}
+
+.erreur{background:var(--bad-bg);color:var(--bad);border-radius:16px;padding:14px 16px;font-size:16px}
+.note{font-size:14px;color:var(--muted);text-align:center}
+.note a,.carte a{color:var(--accent)}
 details summary{cursor:pointer;font-weight:700}
-.history{display:flex;flex-direction:column;gap:6px}
-.hist{font:inherit;text-align:left;display:flex;justify-content:space-between;gap:10px;align-items:center;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--ink);cursor:pointer}
-@media (prefers-reduced-motion: no-preference){ .spin{display:inline-block;animation:sp 1s linear infinite} @keyframes sp{to{transform:rotate(360deg)}} }
+details ul{margin-top:10px}
 </style>
 </head>
 <body>
 <main>
-  <header style="display:flex;flex-direction:column;gap:6px">
-    <h1>Je peux manger ça ?</h1>
-    <p class="sub">Photographie une liste d'ingrédients ou la carte d'un restaurant : l'appli te dit ce qui est compatible avec la grossesse, selon les recommandations de Santé publique France.</p>
-  </header>
 
-  <section class="card" aria-labelledby="t-profil">
-    <h2 id="t-profil">Ma situation</h2>
-    <label class="field" for="code">Code d'accès
-      <input id="code" type="password" autocomplete="off" style="font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px" placeholder="Le code qu'on t'a donné">
-    </label>
-    <label class="field" for="toxo">Toxoplasmose (voir ta prise de sang du début de grossesse)
-      <select id="toxo">
-        <option value="inconnu">Je ne sais pas</option>
-        <option value="non">Non immunisée</option>
-        <option value="immunisee">Immunisée</option>
-      </select>
-    </label>
-  </section>
-
-  <section class="card" aria-labelledby="t-analyse">
-    <h2 id="t-analyse">Que veux-tu vérifier ?</h2>
-    <div class="seg" role="group" aria-label="Type d'analyse">
-      <button type="button" id="m-produit" aria-pressed="true">Produit</button>
-      <button type="button" id="m-menu" aria-pressed="false">Restaurant</button>
-      <button type="button" id="m-texte" aria-pressed="false">Écrire</button>
+<!-- ============ ACCUEIL ============ -->
+<section class="ecran" id="e-accueil">
+  <div class="tete">
+    <div class="marque">
+      <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="var(--accent)"/><path d="M10 16.5l4 4 8-9" fill="none" stroke="var(--on-accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Je peux ?
     </div>
+    <button class="lien" type="button" id="b-reglages">Réglages</button>
+  </div>
 
-    <div id="zone-photo" class="col" style="display:flex;flex-direction:column;gap:10px">
-      <p class="sub" id="hint">Prends en photo la liste des ingrédients, bien à plat et lisible. Tu peux ajouter le nom du produit en 2e photo.</p>
-      <div class="row">
-        <button type="button" class="btn btn-primary" id="b-camera">Prendre une photo</button>
-        <button type="button" class="btn btn-ghost" id="b-galerie">Choisir dans la galerie</button>
-      </div>
-      <input type="file" id="f-camera" accept="image/*" capture="environment" class="hidden">
-      <input type="file" id="f-galerie" accept="image/*" multiple class="hidden">
-      <div class="thumbs" id="thumbs"></div>
-      <label class="field" for="precision">Précision (facultatif)
-        <textarea id="precision" style="min-height:60px" placeholder="Ex : le plat du jour est servi avec une sauce au roquefort"></textarea>
-      </label>
+  <h1 class="titre">Qu'est-ce que tu veux vérifier ?</h1>
+
+  <div class="carte" id="c-bienvenue">
+    <h2 style="font-size:21px">Une seule question avant de commencer</h2>
+    <p class="muted small">Es-tu immunisée contre la toxoplasmose ? C'est écrit sur ta prise de sang du début de grossesse.</p>
+    <div class="puces" role="group" aria-label="Toxoplasmose">
+      <button type="button" class="puce" data-toxo="immunisee" aria-pressed="false">Oui</button>
+      <button type="button" class="puce" data-toxo="non" aria-pressed="false">Non</button>
+      <button type="button" class="puce" data-toxo="inconnu" aria-pressed="false">Je ne sais pas</button>
     </div>
-
-    <div id="zone-texte" class="hidden" style="display:flex;flex-direction:column;gap:10px">
-      <label class="field" for="question">Décris le produit ou le plat
-        <textarea id="question" placeholder="Ex : burrata, tomates, pesto. Ou : est-ce que je peux manger un tiramisu ?"></textarea>
-      </label>
+    <div class="code-bloc" style="display:flex;flex-direction:column;gap:8px">
+      <label for="code" class="small" style="font-weight:700">Code d'accès</label>
+      <input class="champ" id="code" type="text" inputmode="text" autocomplete="off" autocapitalize="none" placeholder="Le code qu'on t'a donné">
     </div>
+    <button type="button" class="btn plein" id="b-commencer" disabled>C'est parti</button>
+  </div>
 
-    <button type="button" class="btn btn-primary" id="b-analyser" disabled>Analyser</button>
-    <p class="status" id="status" aria-live="polite"></p>
-    <div class="error hidden" id="error" role="alert"></div>
-  </section>
+  <div class="tuiles" id="tuiles">
+    <button type="button" class="tuile t1" data-mode="produit">
+      <span class="ico"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9h18l-2 11H5L3 9z"/><path d="M8 9l4-6 4 6"/><path d="M9 13v4M15 13v4"/></svg></span>
+      <span><strong>Un aliment</strong><span class="d">Photo des ingrédients</span></span>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+    </button>
+    <button type="button" class="tuile t2" data-mode="menu">
+      <span class="ico"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3v8a2 2 0 0 0 2 2v8M10 3v8a2 2 0 0 1-2 2M8 3v6"/><path d="M17 21V3c-2 1.5-3 4-3 7s1 4 3 4"/></svg></span>
+      <span><strong>Un restaurant</strong><span class="d">Photo de la carte</span></span>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+    </button>
+    <button type="button" class="tuile t3" data-mode="beaute">
+      <span class="ico"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6v3H9z"/><path d="M8 6h8l1 3v10a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V9l1-3z"/><path d="M10 13h4"/></svg></span>
+      <span><strong>Un soin, un maquillage</strong><span class="d">Photo de la liste d'ingrédients</span></span>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+    </button>
+    <button type="button" class="ecrire" id="b-ecrire">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg>
+      Ou écrire ma question
+    </button>
+  </div>
 
-  <section id="resultat" class="card" aria-live="polite"></section>
+  <div class="bloc hidden" id="b-histo">
+    <h2>Déjà vérifiés</h2>
+    <div class="histo" id="histo"></div>
+  </div>
 
-  <section class="card hidden" id="bloc-historique" aria-labelledby="t-hist">
-    <h2 id="t-hist">Mes dernières vérifications</h2>
-    <div class="history" id="historique"></div>
-  </section>
+  <p class="note">Une aide pour repérer les risques, pas un avis médical.<br>Sources : Santé publique France et ANSM.</p>
+  <input type="file" id="f-photo" accept="image/*" multiple class="hidden">
+</section>
 
-  <section class="card">
+<!-- ============ PHOTOS ============ -->
+<section class="ecran hidden" id="e-photos">
+  <button type="button" class="retour" data-retour>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Retour
+  </button>
+  <h1 class="titre" style="font-size:32px" id="photos-titre">Ta photo</h1>
+  <p class="muted" id="photos-aide"></p>
+  <div class="vignettes" id="vignettes"></div>
+  <details>
+    <summary>Ajouter une précision</summary>
+    <textarea class="champ" id="precision" style="min-height:80px;margin-top:10px" placeholder="Ex : le plat du jour est servi avec une sauce au roquefort"></textarea>
+  </details>
+  <button type="button" class="btn plein" id="b-verifier">Vérifier</button>
+  <div class="erreur hidden" id="err-photos" role="alert"></div>
+</section>
+
+<!-- ============ ÉCRIRE ============ -->
+<section class="ecran hidden" id="e-ecrire">
+  <button type="button" class="retour" data-retour>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Retour
+  </button>
+  <h1 class="titre" style="font-size:32px">Ta question</h1>
+  <label for="question" class="muted">Un aliment, un plat ou un produit de beauté.</label>
+  <textarea class="champ" id="question" placeholder="Ex : est-ce que je peux manger une burrata ? Ou : crème au rétinol ?"></textarea>
+  <button type="button" class="btn plein" id="b-verifier-texte" disabled>Vérifier</button>
+  <div class="erreur hidden" id="err-ecrire" role="alert"></div>
+</section>
+
+<!-- ============ ATTENTE ============ -->
+<section class="ecran hidden" id="e-attente">
+  <div class="attente" aria-live="polite">
+    <div class="points" aria-hidden="true"><i></i><i></i><i></i></div>
+    <h2 style="font-size:26px" id="attente-txt">Je lis l'étiquette…</h2>
+    <p class="muted small">Environ 15 secondes</p>
+  </div>
+</section>
+
+<!-- ============ RÉSULTAT ============ -->
+<section class="ecran hidden" id="e-resultat">
+  <button type="button" class="retour" data-retour>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Accueil
+  </button>
+  <div id="resultat" class="ecran"></div>
+  <button type="button" class="btn plein" id="b-nouveau">Vérifier autre chose</button>
+</section>
+
+<!-- ============ RÉGLAGES ============ -->
+<section class="ecran hidden" id="e-reglages">
+  <button type="button" class="retour" data-retour>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Retour
+  </button>
+  <h1 class="titre" style="font-size:32px">Réglages</h1>
+  <div class="carte">
+    <h2 style="font-size:19px">Immunisée contre la toxoplasmose ?</h2>
+    <div class="puces" role="group" aria-label="Toxoplasmose">
+      <button type="button" class="puce" data-toxo="immunisee" aria-pressed="false">Oui</button>
+      <button type="button" class="puce" data-toxo="non" aria-pressed="false">Non</button>
+      <button type="button" class="puce" data-toxo="inconnu" aria-pressed="false">Je ne sais pas</button>
+    </div>
+  </div>
+  <div class="carte code-bloc">
+    <label for="code2" style="font-weight:700;font-family:var(--display);font-size:19px">Code d'accès</label>
+    <input class="champ" id="code2" type="text" autocomplete="off" autocapitalize="none">
+  </div>
+  <div class="carte">
     <details>
       <summary>Les règles utilisées</summary>
-      <ul class="plain" style="margin-top:10px">
-        <li><strong>À éviter :</strong> alcool sous toutes ses formes (même cuit), lait cru, fromages à pâte molle (camembert, brie…) et à pâte pressée non cuite (reblochon, morbier), croûtes, fromage râpé en sachet, charcuterie prête à manger (jambon, pâtés, rillettes), saucisson et jambon sec, viande, poisson ou œufs crus ou peu cuits, sushis, poisson fumé ou mariné, coquillages crus, graines germées crues, soja, espadon, marlin, requin.</li>
-        <li><strong>Avec modération :</strong> caféine, thon, bar, dorade, lotte, raie, anguille, foie.</li>
-        <li><strong>Sans souci :</strong> fromages à pâte pressée cuite (comté, emmental, beaufort, parmesan), viandes et poissons bien cuits, fromage cuit jusqu'à être bien chaud, mayonnaise et desserts industriels, fruits et légumes bien lavés ou cuits.</li>
+      <ul class="simple small">
+        <li><strong>Aliments à éviter :</strong> alcool (même cuit), lait cru, fromages à pâte molle et à croûte fleurie, croûtes, charcuterie prête à manger, saucisson et jambon sec, viande, poisson ou œufs crus ou peu cuits, sushis, poisson fumé, coquillages crus, graines germées, soja, espadon, requin, marlin.</li>
+        <li><strong>Aliments avec modération :</strong> caféine, thon, bar, dorade, lotte, raie, anguille, foie.</li>
+        <li><strong>Soins à éviter :</strong> rétinoïdes et rétinol, hydroquinone, acide salicylique concentré, huiles essentielles, propylparaben et butylparaben, certains filtres solaires chimiques.</li>
+        <li><strong>Soins avec prudence :</strong> phénoxyéthanol, parfum, colorations capillaires, autobronzants.</li>
       </ul>
     </details>
-    <p class="legal">Cette appli aide à repérer les risques, elle ne remplace pas l'avis de ta sage-femme ou de ton médecin. En cas de doute, demande au serveur ou abstiens-toi. Source : <a href="https://www.sante.fr/node/7070507" target="_blank" rel="noopener">Santé publique France, 2025</a>.</p>
-  </section>
+    <p class="small muted">Cette appli aide à repérer les risques. Elle ne remplace pas l'avis de ta sage-femme, de ton médecin ou de ton pharmacien. Sources : <a href="https://www.sante.fr/node/7070507" target="_blank" rel="noopener">Santé publique France</a> et <a href="https://ansm.sante.fr/documents/reference/recommandations-pour-les-produits-cosmetiques" target="_blank" rel="noopener">ANSM</a>.</p>
+  </div>
+  <button type="button" class="btn doux" id="b-effacer">Effacer l'historique</button>
+</section>
+
 </main>
 
 <script>
 (function(){
   "use strict";
-  const $ = (id) => document.getElementById(id);
-  const store = {
-    get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
-    set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+  var BACKEND = "api"; // "api" = serveur Vercel, "claude" = page Claude
+  var $ = function(id){ return document.getElementById(id); };
+  var store = {
+    get: function(k, d){ try{ var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+    set: function(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
   };
+  var esc = function(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return { "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]; }); };
+  var norm = function(v){ return (v === "ok" || v === "prudence" || v === "eviter") ? v : "prudence"; };
 
-  let mode = "produit";
-  let photos = []; // {blob, url}
-  let busy = false;
+  var mode = "produit", photos = [], pile = ["e-accueil"], sample = null, enCours = false;
+
+  // ---------- Navigation ----------
+  function aller(id, remplacer){
+    document.querySelectorAll(".ecran[id^='e-']").forEach(function(s){ s.classList.add("hidden"); });
+    $(id).classList.remove("hidden");
+    if (remplacer) pile[pile.length - 1] = id; else if (pile[pile.length - 1] !== id) pile.push(id);
+    window.scrollTo(0, 0);
+  }
+  function retour(){
+    pile.pop();
+    var id = pile[pile.length - 1] || "e-accueil";
+    if (id === "e-attente") { pile.pop(); id = pile[pile.length - 1] || "e-accueil"; }
+    aller(id, true);
+    if (id === "e-accueil") { pile = ["e-accueil"]; dessinerHisto(); }
+  }
+  document.querySelectorAll("[data-retour]").forEach(function(b){ b.onclick = retour; });
+  $("b-nouveau").onclick = function(){ pile = ["e-accueil"]; aller("e-accueil", true); dessinerHisto(); };
+  $("b-reglages").onclick = function(){ aller("e-reglages"); };
 
   // ---------- Profil ----------
-  $("toxo").value = store.get("toxo", "inconnu");
-  $("toxo").addEventListener("change", () => store.set("toxo", $("toxo").value));
-  $("code").value = store.get("code", "");
-  $("code").addEventListener("change", () => store.set("code", $("code").value.trim()));
-
-  // ---------- Modes ----------
-  const hints = {
-    produit: "Prends en photo la liste des ingrédients, bien à plat et lisible. Tu peux ajouter le nom du produit en 2e photo.",
-    menu: "Prends en photo la carte (plusieurs pages possibles, jusqu'à 4 photos). L'appli classe chaque plat."
-  };
-  function setMode(m){
-    mode = m;
-    ["produit","menu","texte"].forEach(x => $("m-"+x).setAttribute("aria-pressed", String(x === m)));
-    $("zone-photo").classList.toggle("hidden", m === "texte");
-    $("zone-texte").classList.toggle("hidden", m !== "texte");
-    if (hints[m]) $("hint").textContent = hints[m];
-    refresh();
+  var avecCode = BACKEND === "api";
+  if (!avecCode) document.querySelectorAll(".code-bloc").forEach(function(e){ e.classList.add("hidden"); });
+  function toxo(){ return store.get("toxo", null); }
+  function majPuces(){
+    document.querySelectorAll("[data-toxo]").forEach(function(b){ b.setAttribute("aria-pressed", String(b.dataset.toxo === (choixToxo || toxo()))); });
   }
-  $("m-produit").onclick = () => setMode("produit");
-  $("m-menu").onclick = () => setMode("menu");
-  $("m-texte").onclick = () => setMode("texte");
+  var choixToxo = null;
+  document.querySelectorAll("#c-bienvenue [data-toxo]").forEach(function(b){
+    b.onclick = function(){ choixToxo = b.dataset.toxo; majPuces(); majCommencer(); };
+  });
+  document.querySelectorAll("#e-reglages [data-toxo]").forEach(function(b){
+    b.onclick = function(){ store.set("toxo", b.dataset.toxo); choixToxo = null; majPuces(); };
+  });
+  $("code").addEventListener("input", majCommencer);
+  $("code2").addEventListener("change", function(){ store.set("code", $("code2").value.trim()); });
+  function majCommencer(){ $("b-commencer").disabled = !(choixToxo && (!avecCode || $("code").value.trim())); }
+  $("b-commencer").onclick = function(){
+    store.set("toxo", choixToxo);
+    if (avecCode) store.set("code", $("code").value.trim());
+    choixToxo = null; majAccueil();
+  };
+  function pret(){ return !!toxo() && (!avecCode || !!store.get("code", "")); }
+  function majAccueil(){
+    var ok = pret();
+    $("c-bienvenue").classList.toggle("hidden", ok);
+    $("tuiles").style.opacity = ok ? "1" : ".45";
+    $("tuiles").style.pointerEvents = ok ? "auto" : "none";
+    $("code2").value = store.get("code", "");
+    majPuces();
+  }
 
   // ---------- Photos ----------
-  $("b-camera").onclick = () => $("f-camera").click();
-  $("b-galerie").onclick = () => $("f-galerie").click();
-  $("f-camera").onchange = (e) => addFiles(e.target.files);
-  $("f-galerie").onchange = (e) => addFiles(e.target.files);
-  $("question").addEventListener("input", refresh);
-
-  async function shrink(file){
-    // Réduit l'image (côté max 1600 px) pour un envoi rapide
-    const url = URL.createObjectURL(file);
+  var textes = {
+    produit: { titre: "Ton aliment", aide: "Vérifie que la liste des ingrédients est bien lisible. Tu peux ajouter une photo du nom du produit." },
+    menu: { titre: "La carte", aide: "Ajoute toutes les pages de la carte, jusqu'à 4 photos." },
+    beaute: { titre: "Ton produit", aide: "Cadre bien la liste des ingrédients (souvent au dos, après « Ingredients »)." }
+  };
+  document.querySelectorAll(".tuile").forEach(function(t){
+    t.onclick = function(){ mode = t.dataset.mode; photos = []; $("precision").value = ""; $("f-photo").click(); };
+  });
+  $("f-photo").onchange = async function(e){
+    var fichiers = Array.from(e.target.files || []);
+    $("f-photo").value = "";
+    if (!fichiers.length) return;
+    for (var i = 0; i < fichiers.length && photos.length < 4; i++){
+      if (!fichiers[i].type || fichiers[i].type.indexOf("image/") !== 0) continue;
+      var blob = await reduire(fichiers[i]);
+      photos.push({ blob: blob, url: URL.createObjectURL(blob) });
+    }
+    $("photos-titre").textContent = textes[mode].titre;
+    $("photos-aide").textContent = textes[mode].aide;
+    $("err-photos").classList.add("hidden");
+    dessinerVignettes();
+    if ($("e-photos").classList.contains("hidden")) aller("e-photos");
+  };
+  async function reduire(file){
+    var url = URL.createObjectURL(file);
     try{
-      const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
-      const max = 1280, r = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
-      const c = document.createElement("canvas");
+      var img = await new Promise(function(res, rej){ var i = new Image(); i.onload = function(){ res(i); }; i.onerror = rej; i.src = url; });
+      var r = Math.min(1, 1280 / Math.max(img.naturalWidth, img.naturalHeight));
+      var c = document.createElement("canvas");
       c.width = Math.round(img.naturalWidth * r); c.height = Math.round(img.naturalHeight * r);
       c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
-      const blob = await new Promise(res => c.toBlob(res, "image/jpeg", 0.8));
-      return blob || file;
-    } catch(e){ return file; }
-    finally { URL.revokeObjectURL(url); }
+      var b = await new Promise(function(res){ c.toBlob(res, "image/jpeg", 0.8); });
+      return b || file;
+    } catch(e){ return file; } finally { URL.revokeObjectURL(url); }
   }
-  async function addFiles(list){
-    for (const f of Array.from(list || [])){
-      if (photos.length >= 4) break;
-      if (!f.type.startsWith("image/")) continue;
-      const blob = await shrink(f);
-      photos.push({ blob, url: URL.createObjectURL(blob) });
-    }
-    $("f-camera").value = ""; $("f-galerie").value = "";
-    drawThumbs(); refresh();
-  }
-  function drawThumbs(){
-    const t = $("thumbs"); t.innerHTML = "";
-    photos.forEach((p, i) => {
-      const d = document.createElement("div"); d.className = "thumb";
-      const im = document.createElement("img"); im.src = p.url; im.alt = "Photo " + (i+1);
-      const b = document.createElement("button"); b.type = "button"; b.textContent = "×"; b.setAttribute("aria-label", "Retirer la photo " + (i+1));
-      b.onclick = () => { URL.revokeObjectURL(p.url); photos.splice(i,1); drawThumbs(); refresh(); };
-      d.append(im, b); t.append(d);
+  function dessinerVignettes(){
+    var v = $("vignettes"); v.innerHTML = "";
+    photos.forEach(function(p, i){
+      var d = document.createElement("div"); d.className = "vignette";
+      d.innerHTML = '<img alt="Photo ' + (i + 1) + '"><button type="button" aria-label="Retirer la photo ' + (i + 1) + '">×</button>';
+      d.querySelector("img").src = p.url;
+      d.querySelector("button").onclick = function(){ URL.revokeObjectURL(p.url); photos.splice(i, 1); dessinerVignettes(); };
+      v.append(d);
     });
+    if (photos.length < 4){
+      var a = document.createElement("button"); a.type = "button"; a.className = "ajout";
+      a.innerHTML = '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>' + (photos.length ? "Ajouter une photo" : "Prendre une photo");
+      a.onclick = function(){ $("f-photo").click(); };
+      v.append(a);
+    }
+    $("b-verifier").disabled = photos.length === 0;
   }
-  function refresh(){
-    const ready = mode === "texte" ? $("question").value.trim().length > 2 : photos.length > 0;
-    $("b-analyser").disabled = busy || !ready;
-  }
+  $("b-verifier").onclick = function(){ lancer(mode, $("precision").value.trim(), "err-photos"); };
+
+  // ---------- Écrire ----------
+  $("b-ecrire").onclick = function(){ $("err-ecrire").classList.add("hidden"); aller("e-ecrire"); $("question").focus(); };
+  $("question").addEventListener("input", function(){ $("b-verifier-texte").disabled = $("question").value.trim().length < 3; });
+  $("b-verifier-texte").onclick = function(){ lancer("texte", $("question").value.trim(), "err-ecrire"); };
 
   // ---------- Analyse ----------
-  const toBase64 = (blob) => new Promise((res, rej) => {
-    const r = new FileReader();
-    r.onload = () => res(String(r.result).split(",")[1]);
-    r.onerror = rej; r.readAsDataURL(blob);
-  });
-
-  async function analyser(){
-    if (busy) return;
-    $("error").classList.add("hidden");
-    const code = $("code").value.trim();
-    if (!code){ showError("Saisis le code d'accès en haut de la page."); $("code").focus(); return; }
-    store.set("code", code);
-    busy = true; refresh();
-    $("status").innerHTML = '<span class="spin" aria-hidden="true">◌</span> Lecture et analyse en cours, environ 15 secondes…';
-    try{
-      const images = mode === "texte" ? [] : await Promise.all(photos.map(p => toBase64(p.blob)));
-      const precision = mode === "texte" ? $("question").value.trim() : $("precision").value.trim();
-      const r = await fetch("/api/analyse", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ code, mode, toxo: $("toxo").value, precision, images })
+  var messages = {
+    produit: ["Je lis l'étiquette…", "Je compare aux recommandations…", "Je prépare des alternatives…"],
+    menu: ["Je lis la carte…", "Je regarde chaque plat…", "Je prépare tes questions…"],
+    beaute: ["Je lis les ingrédients…", "Je repère les ingrédients sensibles…", "Je cherche des alternatives…"],
+    texte: ["Je réfléchis…", "Je compare aux recommandations…", "Je prépare la réponse…"]
+  };
+  var minuteur = null;
+  function attente(m){
+    var liste = messages[m], i = 0;
+    $("attente-txt").textContent = liste[0];
+    clearInterval(minuteur);
+    minuteur = setInterval(function(){ i = Math.min(i + 1, liste.length - 1); $("attente-txt").textContent = liste[i]; }, 5000);
+    aller("e-attente");
+  }
+  function enBase64(blob){
+    return new Promise(function(res, rej){ var r = new FileReader(); r.onload = function(){ res(String(r.result).split(",")[1]); }; r.onerror = rej; r.readAsDataURL(blob); });
+  }
+  async function demander(m, precision){
+    var blobs = m === "texte" ? [] : photos.map(function(p){ return p.blob; });
+    if (BACKEND === "api"){
+      var images = await Promise.all(blobs.map(enBase64));
+      var r = await fetch("/api/analyse", {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ code: store.get("code", ""), mode: m, toxo: toxo(), precision: precision, images: images })
       });
-      let data = null;
-      try { data = await r.json(); } catch(e) {}
+      var data = null; try { data = await r.json(); } catch(e) {}
       if (r.status === 413) throw new Error("Les photos sont trop lourdes. Envoie-en moins à la fois.");
+      if (r.status === 401){ store.set("code", ""); throw new Error("Le code d'accès n'est pas bon. Corrige-le dans Réglages."); }
       if (!r.ok) throw new Error((data && data.erreur) || "Une erreur est survenue. Réessaie.");
-      data.mode = mode; data.date = new Date().toISOString();
-      afficher(data, false);
-      if (data.lisible !== false) sauver(data);
-      $("status").textContent = "";
+      return data;
+    }
+    if (!sample) throw new Error("L'analyse n'est pas disponible ici. Ouvre la page depuis claude.ai ou l'application Claude.");
+    var opts = { modelTier: "default" };
+    if (blobs.length){
+      var lim = await sample.limits().catch(function(){ return {}; });
+      if (!lim || !lim.images) throw new Error("L'envoi de photos n'est pas disponible ici. Utilise « Ou écrire ma question ».");
+      opts.images = blobs;
+    }
+    try {
+      var res = await sample(construireConsigne(m, toxo(), precision), opts);
+      return lireJSON(res.text);
     } catch(e){
-      $("status").textContent = "";
-      showError(e && e.message && e.message !== "Failed to fetch" ? e.message : "Pas de connexion. Vérifie ton réseau et réessaie.");
-    } finally {
-      busy = false; refresh();
+      if (e && e.code === "not_granted") throw new Error("L'accès à Claude a été refusé. Recharge la page et accepte la demande.");
+      if (e && e.code === "rate_limited") throw new Error("Trop de demandes d'un coup. Attends une minute puis réessaie.");
+      if (e instanceof SyntaxError) throw new Error("La réponse n'a pas pu être lue. Réessaie avec une photo plus nette.");
+      throw e;
     }
   }
-  $("b-analyser").onclick = analyser;
+  async function lancer(m, precision, errId){
+    if (enCours) return;
+    enCours = true;
+    $(errId).classList.add("hidden");
+    attente(m);
+    try{
+      var d = await demander(m, precision);
+      d.mode = m; d.date = new Date().toISOString();
+      afficher(d);
+      if (d.lisible !== false) sauver(d);
+      aller("e-resultat", true);
+    } catch(e){
+      retour();
+      var el = $(errId);
+      el.textContent = (e && e.message && e.message !== "Failed to fetch") ? e.message : "Pas de connexion. Vérifie ton réseau et réessaie.";
+      el.classList.remove("hidden");
+    } finally {
+      clearInterval(minuteur); enCours = false;
+    }
+  }
 
-  function showError(msg){ const el = $("error"); el.textContent = msg; el.classList.remove("hidden"); }
-
-  // ---------- Affichage ----------
-  const LIB = { ok: "Tu peux en manger", prudence: "Avec prudence", eviter: "À éviter" };
-  const PILL = { ok: "OK", prudence: "Prudence", eviter: "À éviter" };
-  const ICON = { ok: "✓", prudence: "!", eviter: "✕" };
-  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
-  const norm = (v) => (v === "ok" || v === "prudence" || v === "eviter") ? v : "prudence";
-
-  function afficher(d, exemple){
-    const r = $("resultat");
+  // ---------- Résultat ----------
+  var ICONES = {
+    ok: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+    prudence: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M12 6v8M12 18.5v.01"/></svg>',
+    eviter: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg>'
+  };
+  function mots(v, d){
+    var beaute = d.mode === "beaute" || d.categorie === "beaute";
+    if (v === "ok") return beaute ? "Oui, tu peux l'utiliser" : "Oui, tu peux en manger";
+    if (v === "prudence") return "Avec prudence";
+    return beaute ? "Non, mieux vaut éviter" : "Non, à éviter";
+  }
+  function ligne(it){
+    var v = norm(it.verdict);
+    return '<div class="ligne ' + v + '"><span class="pt" aria-label="' + ({ ok:"OK", prudence:"Prudence", eviter:"À éviter" }[v]) + '"></span><div><strong>' + esc(it.nom) + '</strong>' +
+      (it.raison ? '<p>' + esc(it.raison) + '</p>' : '') + (it.conseil ? '<p class="conseil">' + esc(it.conseil) + '</p>' : '') + '</div></div>';
+  }
+  function liste(titre, arr){
+    return (arr && arr.length) ? '<div class="bloc"><h2>' + titre + '</h2><div class="carte"><ul class="simple">' + arr.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join("") + '</ul></div></div>' : "";
+  }
+  function afficher(d){
+    var r = $("resultat");
     if (d.lisible === false){
-      r.innerHTML = `<h2>Photo difficile à lire</h2><p>${esc(d.resume || "Reprends la photo de plus près, sans reflet.")}</p>`;
+      r.innerHTML = '<div class="verdict v-prudence"><span class="rond">' + ICONES.prudence + '</span><span class="mot" style="font-size:32px">Photo difficile à lire</span><p>' + esc(d.resume || "Reprends la photo de plus près, sans reflet.") + '</p></div>';
       return;
     }
-    const v = norm(d.verdict);
-    const items = (d.elements || []).map(it => {
-      const iv = norm(it.verdict);
-      return `<div class="item ${iv}"><span class="stripe" aria-hidden="true"></span><div class="body">
-        <div class="top"><h3>${esc(it.nom)}</h3><span class="pill ${iv}">${PILL[iv]}</span></div>
-        ${it.raison ? `<p class="why">${esc(it.raison)}</p>` : ""}
-        ${it.conseil ? `<p class="tip">${esc(it.conseil)}</p>` : ""}
-      </div></div>`;
-    }).join("");
-    const liste = (titre, arr) => (arr && arr.length) ? `<div style="display:flex;flex-direction:column;gap:6px"><h3>${titre}</h3><ul class="plain">${arr.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : "";
-    r.innerHTML = `
-      ${exemple ? '<span class="tag">Exemple</span>' : ""}
-      <h2>${esc(d.titre || "Résultat")}</h2>
-      <div class="verdict v-${v}"><span class="dot" aria-hidden="true">${ICON[v]}</span>
-        <div style="display:flex;flex-direction:column;gap:4px"><span class="vlabel">${LIB[v]}</span><p>${esc(d.resume)}</p></div></div>
-      ${items ? `<div class="items">${items}</div>` : ""}
-      ${liste(d.mode === "menu" ? "Questions à poser au serveur" : "Questions à poser", d.questions)}
-      ${liste("À vérifier", d.a_verifier)}
-      ${exemple ? '<p class="sub">Prends une photo ci-dessus pour lancer ta propre vérification.</p>' : ""}`;
-    if (!exemple) r.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+    var v = norm(d.verdict), el = d.elements || [], html = "";
+    if (d.mode === "menu"){
+      var groupes = { ok: [], prudence: [], eviter: [] };
+      el.forEach(function(it){ groupes[norm(it.verdict)].push(it); });
+      html += '<div class="verdict v-ok" style="gap:8px"><span class="quoi">' + esc(d.titre || "La carte") + '</span><span class="mot" style="font-size:34px">' +
+        (groupes.ok.length ? groupes.ok.length + " plat" + (groupes.ok.length > 1 ? "s" : "") + " pour toi" : "Peu de choix sûrs") + '</span><p>' + esc(d.resume) + '</p></div>';
+      [["ok","Tu peux prendre"],["prudence","Demande avant de commander"],["eviter","À éviter"]].forEach(function(g){
+        if (groupes[g[0]].length) html += '<div class="bloc"><h2>' + g[1] + '</h2>' + groupes[g[0]].map(ligne).join("") + '</div>';
+      });
+      html += liste("Questions à poser au serveur", d.questions);
+    } else {
+      html += '<div class="verdict v-' + v + '"><span class="rond">' + ICONES[v] + '</span>' +
+        (d.titre ? '<span class="quoi">' + esc(d.titre) + '</span>' : '') +
+        '<span class="mot">' + mots(v, d) + '</span><p>' + esc(d.resume) + '</p></div>';
+      if (d.alternatives && d.alternatives.length){
+        html += '<div class="bloc"><h2>' + (v === "ok" ? "Autres idées" : "À la place, essaie") + '</h2>' +
+          d.alternatives.map(function(a){ return '<div class="alt"><strong>' + esc(a.nom) + '</strong>' + (a.pourquoi ? '<p>' + esc(a.pourquoi) + '</p>' : '') + '</div>'; }).join("") + '</div>';
+      }
+      if (el.length) html += '<div class="bloc"><h2>Le détail</h2>' + el.map(ligne).join("") + '</div>';
+      html += liste("Questions à poser", d.questions);
+    }
+    if (d.mode === "menu" && d.alternatives && d.alternatives.length){
+      html += '<div class="bloc"><h2>Bonnes idées sur cette carte</h2>' + d.alternatives.map(function(a){ return '<div class="alt"><strong>' + esc(a.nom) + '</strong>' + (a.pourquoi ? '<p>' + esc(a.pourquoi) + '</p>' : '') + '</div>'; }).join("") + '</div>';
+    }
+    html += liste("À vérifier", d.a_verifier);
+    html += '<p class="note">En cas de doute, demande à ta sage-femme ou à ton pharmacien.</p>';
+    r.innerHTML = html;
   }
 
-  // ---------- Historique (sur ce téléphone uniquement) ----------
-  function sauver(d){
-    const h = store.get("historique", []);
-    h.unshift(d); store.set("historique", h.slice(0, 10));
-    dessinerHistorique();
-  }
-  function dessinerHistorique(){
-    const h = store.get("historique", []);
-    $("bloc-historique").classList.toggle("hidden", !h.length);
-    const box = $("historique"); box.innerHTML = "";
-    h.forEach(d => {
-      const v = norm(d.verdict);
-      const b = document.createElement("button"); b.type = "button"; b.className = "hist";
-      const date = new Date(d.date);
-      b.innerHTML = `<span>${esc(d.titre || "Analyse")}<br><span class="sub" style="font-size:13px">${isNaN(date) ? "" : date.toLocaleDateString("fr-FR", { day:"numeric", month:"short" })}</span></span><span class="pill ${v}">${PILL[v]}</span>`;
-      b.onclick = () => afficher(d, false);
+  // ---------- Historique (sur ce téléphone) ----------
+  function sauver(d){ var h = store.get("historique", []); h.unshift(d); store.set("historique", h.slice(0, 8)); }
+  function dessinerHisto(){
+    var h = store.get("historique", []);
+    $("b-histo").classList.toggle("hidden", !h.length);
+    var box = $("histo"); box.innerHTML = "";
+    h.forEach(function(d){
+      var b = document.createElement("button"); b.type = "button";
+      var dt = new Date(d.date);
+      b.innerHTML = '<span class="pt ' + (d.mode === "menu" ? "ok" : norm(d.verdict)) + '"></span><span class="nm">' + esc(d.titre || "Vérification") + '</span><span class="dt">' + (isNaN(dt) ? "" : dt.toLocaleDateString("fr-FR", { day:"numeric", month:"short" })) + '</span>';
+      b.onclick = function(){ afficher(d); aller("e-resultat"); };
       box.append(b);
     });
   }
+  $("b-effacer").onclick = function(){ store.set("historique", []); dessinerHisto(); $("b-effacer").textContent = "Historique effacé"; };
 
-  // ---------- État de départ ----------
-  afficher({
-    titre: "Tiramisu maison",
-    verdict: "eviter",
-    resume: "Le tiramisu fait maison contient des œufs crus et souvent de l'alcool : mieux vaut s'en passer pendant la grossesse.",
-    elements: [
-      { nom: "Œufs crus", verdict: "eviter", raison: "Risque de salmonellose.", conseil: "Un tiramisu industriel est à faible risque, s'il est sans alcool." },
-      { nom: "Marsala ou amaretto", verdict: "eviter", raison: "Aucune quantité d'alcool n'est sans risque pendant la grossesse.", conseil: "" },
-      { nom: "Mascarpone", verdict: "ok", raison: "Fromage pasteurisé.", conseil: "" },
-      { nom: "Café", verdict: "prudence", raison: "Contient de la caféine, à limiter.", conseil: "" }
-    ],
-    questions: ["Le tiramisu est-il fait maison ?", "Contient-il de l'alcool ?"],
-    a_verifier: [],
-    mode: "menu"
-  }, true);
-  dessinerHistorique();
-  refresh();
-
+  // ---------- Démarrage ----------
+  majAccueil(); dessinerHisto(); dessinerVignettes();
+  if (BACKEND === "claude" && window.claude && typeof window.claude.use === "function"){
+    window.claude.use("sample").then(function(s){ sample = s; }).catch(function(){});
+  }
 })();
 </script>
 </body>
