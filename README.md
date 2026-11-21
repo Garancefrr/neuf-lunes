@@ -13,12 +13,11 @@ Application web pour femme enceinte : on photographie la liste des ingrédients 
 ## Mise en ligne sur Vercel
 
 1. Sur vercel.com : **Add New** puis **Project**, et importer ce dépôt GitHub. Aucun réglage de compilation n'est nécessaire.
-2. Avant de cliquer sur **Deploy**, ouvrir **Environment Variables** et ajouter :
+2. Avant de cliquer sur **Deploy**, ouvrir **Environment Variables** et ajouter la clé :
 
 | Nom | Valeur |
 |---|---|
 | `ANTHROPIC_API_KEY` | La clé créée sur console.anthropic.com (rubrique API Keys) |
-| `CODE_ACCES` | Facultatif. Un code au choix : il est caché dans le lien à partager, sous la forme `https://neuf-lunes.vercel.app/?code=LE_CODE`. La personne n'a rien à taper. Sans cette variable, l'appli est ouverte à tous. |
 
 3. Cliquer sur **Deploy**. L'adresse obtenue (par exemple `neuf-lunes.vercel.app`) est celle à envoyer.
 

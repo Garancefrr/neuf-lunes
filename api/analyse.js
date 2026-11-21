@@ -1,6 +1,6 @@
 // Fonction serveur Vercel : reçoit les photos, interroge Claude, renvoie le verdict.
 // La clé API reste ici, côté serveur : elle n'est jamais envoyée au navigateur.
-// Variables à définir dans Vercel : ANTHROPIC_API_KEY et CODE_ACCES.
+// Variable à définir dans Vercel : ANTHROPIC_API_KEY.
 
 const { construireConsigne, lireJSON } = require("./_consigne.js");
 
@@ -62,12 +62,9 @@ module.exports = async function handler(req, res) {
 
   let body = req.body || {};
   if (typeof body === "string") { try { body = JSON.parse(body || "{}"); } catch (e) { body = {}; } }
-  const { code, mode, toxo, precision, images } = body;
+  const { mode, toxo, precision, images } = body;
 
-  // Code facultatif : vérifié seulement si CODE_ACCES est défini dans Vercel (il voyage caché dans le lien)
-  if (process.env.CODE_ACCES && code !== process.env.CODE_ACCES) {
-    return res.status(401).json({ erreur: "Code d'accès incorrect.", code: "code" });
-  }
+  // Accès libre : aucune vérification de code.
   if (!MODES.includes(mode)) return res.status(400).json({ erreur: "Type d'analyse inconnu." });
 
   const photos = (Array.isArray(images) ? images : [])
