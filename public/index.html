@@ -3,153 +3,168 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#eef2ec">
+<meta name="theme-color" content="#f8f5f3">
 <title>Je peux manger ça ?</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-/* Plan : un écran à la fois. Accueil = 3 grosses tuiles ; une photo ; un verdict en très grand. */
+/* Plan : esprit « illustration douce » - formes organiques, brins de plantes au trait, mauve / sauge / rose poudré, boutons vert profond.
+   Un écran à la fois : accueil = 3 grandes cartes ; une photo ; un verdict en très grand. */
 :root{
-  --bg:#eef2ec;
+  --bg:#f8f5f3;
   --surface:#ffffff;
-  --ink:#17251e;
-  --muted:#5b6a61;
-  --line:#d7e0d8;
-  --accent:#2f5d4a;
+  --ink:#2a2331;
+  --muted:#6f6577;
+  --line:#e7e0e6;
+  --accent:#0d7468;          /* vert profond des boutons */
   --on-accent:#ffffff;
-  --t1:#ffe2c9; --t1-ink:#8a4510;
-  --t2:#dbe7ff; --t2-ink:#244a8f;
-  --t3:#ffdce5; --t3-ink:#9a2a50;
-  --ok:#1e7a49; --ok-bg:#dff3e7;
-  --warn:#9a5a00; --warn-bg:#fdefd5;
-  --bad:#b4261e; --bad-bg:#fbe2df;
-  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
-  --body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
-  --r:22px;
+  --mauve:#a98cc0; --mauve-soft:#efe7f4;
+  --sage:#a9c3ad;  --sage-soft:#e6efe6;
+  --blush:#f4b9ae; --blush-soft:#fde9e4;
+  --cobalt:#2f5fd8;
+  --ok:#1d7a5c; --ok-bg:#e2f0e7;
+  --warn:#a8650c; --warn-bg:#fbeedb;
+  --bad:#bf3a49; --bad-bg:#fbe3e4;
+  --display:"DM Serif Display", Georgia, "Times New Roman", serif;
+  --body:"Outfit", "Segoe UI", system-ui, sans-serif;
+  --r:26px;
   color-scheme:light;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#0f1613; --surface:#18221d; --ink:#e6eee8; --muted:#9aaba1; --line:#28352e;
-    --accent:#8fd1b2; --on-accent:#0f1613;
-    --t1:#3b2817; --t1-ink:#ffc58f; --t2:#1b2840; --t2-ink:#a9c6ff; --t3:#3b1d28; --t3-ink:#ffadc4;
-    --ok:#74d6a0; --ok-bg:#15301f; --warn:#f3c066; --warn-bg:#33270e; --bad:#ff948a; --bad-bg:#3b1a17;
+    --bg:#19151d; --surface:#241f2a; --ink:#f1ecf4; --muted:#ab9fb4; --line:#373040;
+    --accent:#5fcab8; --on-accent:#10231f;
+    --mauve:#bda3d3; --mauve-soft:#342a3e; --sage:#9fc0a6; --sage-soft:#24322a; --blush:#f2b0a5; --blush-soft:#3d2a29;
+    --cobalt:#8aa9ff;
+    --ok:#7fd8ad; --ok-bg:#1c3328; --warn:#f2c070; --warn-bg:#3a2d17; --bad:#ff9aa4; --bad-bg:#40222a;
     color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#0f1613; --surface:#18221d; --ink:#e6eee8; --muted:#9aaba1; --line:#28352e;
-  --accent:#8fd1b2; --on-accent:#0f1613;
-  --t1:#3b2817; --t1-ink:#ffc58f; --t2:#1b2840; --t2-ink:#a9c6ff; --t3:#3b1d28; --t3-ink:#ffadc4;
-  --ok:#74d6a0; --ok-bg:#15301f; --warn:#f3c066; --warn-bg:#33270e; --bad:#ff948a; --bad-bg:#3b1a17;
+  --bg:#19151d; --surface:#241f2a; --ink:#f1ecf4; --muted:#ab9fb4; --line:#373040;
+  --accent:#5fcab8; --on-accent:#10231f;
+  --mauve:#bda3d3; --mauve-soft:#342a3e; --sage:#9fc0a6; --sage-soft:#24322a; --blush:#f2b0a5; --blush-soft:#3d2a29;
+  --cobalt:#8aa9ff;
+  --ok:#7fd8ad; --ok-bg:#1c3328; --warn:#f2c070; --warn-bg:#3a2d17; --bad:#ff9aa4; --bad-bg:#40222a;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%}
-body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:18px;line-height:1.45;-webkit-tap-highlight-color:transparent}
-main{max-width:520px;margin:0 auto;padding:22px 18px 40px}
-h1,h2,h3{font-family:var(--display);margin:0;line-height:1.1;text-wrap:balance}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:18px;line-height:1.45;-webkit-tap-highlight-color:transparent;overflow-x:hidden}
+main{max-width:520px;margin:0 auto;padding:18px 18px 40px;position:relative}
+h1,h2,h3{font-family:var(--display);font-weight:400;margin:0;line-height:1.08;text-wrap:balance}
 p{margin:0}
 button{font:inherit;color:inherit;cursor:pointer}
 button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 .hidden{display:none !important}
-.ecran{display:flex;flex-direction:column;gap:18px}
+.ecran{display:flex;flex-direction:column;gap:18px;position:relative}
 .muted{color:var(--muted)}
 .small{font-size:15px}
 
 /* En-tête */
-.tete{display:flex;justify-content:space-between;align-items:center;gap:12px}
-.marque{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:17px}
-.marque svg{flex:0 0 auto}
-.lien{background:none;border:0;padding:8px 0;color:var(--accent);font-weight:700;font-size:16px}
-.titre{font-size:40px;font-weight:800;letter-spacing:-.02em}
+.tete{display:flex;justify-content:space-between;align-items:center;gap:12px;position:relative;z-index:1}
+.marque{display:flex;align-items:center;gap:8px;font-weight:600;font-size:16px;letter-spacing:.02em}
+.lien{background:var(--surface);border:1.5px solid var(--line);border-radius:999px;padding:8px 16px;color:var(--ink);font-weight:600;font-size:15px}
+
+/* Couverture illustrée */
+.couverture{position:relative;border-radius:32px;background:var(--surface);padding:158px 22px 26px;overflow:hidden;display:flex;flex-direction:column;gap:8px}
+.couverture .deco{position:absolute;top:0;left:0;width:100%;height:160px;pointer-events:none}
+.couverture .surtitre{position:relative;font-size:14px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.titre{position:relative;font-size:42px;letter-spacing:-.01em}
+.couverture p{position:relative;color:var(--muted);font-size:16px;max-width:30ch}
 
 /* Tuiles */
 .tuiles{display:grid;gap:12px}
-.tuile{display:grid;grid-template-columns:64px 1fr 24px;align-items:center;gap:14px;border:0;border-radius:var(--r);padding:18px;text-align:left;min-height:96px;transition:transform .12s ease}
+.tuile{position:relative;overflow:hidden;display:grid;grid-template-columns:76px 1fr 40px;align-items:center;gap:14px;border:0;border-radius:var(--r);padding:16px 16px 16px 14px;text-align:left;min-height:104px;background:var(--surface);color:var(--ink);transition:transform .15s ease, box-shadow .15s ease;box-shadow:0 1px 0 var(--line)}
 .tuile:active{transform:scale(.98)}
-.tuile .ico{width:64px;height:64px;border-radius:18px;display:grid;place-items:center;background:rgba(255,255,255,.55)}
-.tuile strong{display:block;font-family:var(--display);font-size:23px;font-weight:700;line-height:1.1}
-.tuile span.d{display:block;font-size:15px;opacity:.85;margin-top:3px}
-.tuile.t1{background:var(--t1);color:var(--t1-ink)}
-.tuile.t2{background:var(--t2);color:var(--t2-ink)}
-.tuile.t3{background:var(--t3);color:var(--t3-ink)}
-@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .tuile .ico{background:rgba(255,255,255,.07)} }
-:root[data-theme="dark"] .tuile .ico{background:rgba(255,255,255,.07)}
-.ecrire{display:flex;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--line);background:transparent;border-radius:var(--r);padding:14px;color:var(--muted);font-weight:700}
+.tuile .ico{position:relative;width:76px;height:76px;display:grid;place-items:center}
+.tuile .ico svg.blob{position:absolute;inset:0;width:100%;height:100%}
+.tuile .ico svg.trait{position:relative;color:var(--ink)}
+.tuile strong{display:block;font-family:var(--display);font-weight:400;font-size:25px;line-height:1.05}
+.tuile span.d{display:block;font-size:15px;color:var(--muted);margin-top:4px}
+.tuile .fleche{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:var(--on-accent);background:var(--accent)}
+.tuile.t1 .ico .blob{color:var(--blush)}
+.tuile.t2 .ico .blob{color:var(--sage)}
+.tuile.t3 .ico .blob{color:var(--mauve)}
+.ecrire{display:flex;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--mauve);background:transparent;border-radius:var(--r);padding:15px;color:var(--ink);font-weight:600}
 
 /* Cartes */
-.carte{background:var(--surface);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:12px}
+.carte{background:var(--surface);border-radius:var(--r);padding:20px;display:flex;flex-direction:column;gap:12px;position:relative;overflow:hidden}
+.carte.accueil-q{background:var(--mauve-soft)}
 .puces{display:flex;flex-wrap:wrap;gap:8px}
-.puce{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 16px;font-size:16px}
-.puce[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:700}
-input.champ,textarea.champ{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:14px;padding:12px 14px}
+.puce{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:10px 18px;font-size:16px;font-weight:500}
+.puce[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600}
+input.champ,textarea.champ{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:16px;padding:13px 15px}
+.carte.accueil-q input.champ{background:var(--surface)}
 textarea.champ{min-height:120px;resize:vertical}
 
 /* Boutons */
-.btn{border:0;border-radius:18px;padding:17px 18px;font-weight:700;font-size:18px;display:flex;align-items:center;justify-content:center;gap:10px;width:100%}
+.btn{border:0;border-radius:999px;padding:18px 20px;font-weight:600;font-size:18px;display:flex;align-items:center;justify-content:center;gap:10px;width:100%;letter-spacing:.01em}
 .btn.plein{background:var(--accent);color:var(--on-accent)}
-.btn.doux{background:var(--surface);color:var(--ink)}
-.btn:disabled{opacity:.45;cursor:not-allowed}
-.retour{align-self:flex-start;background:var(--surface);border:0;border-radius:999px;padding:8px 16px 8px 10px;display:flex;align-items:center;gap:6px;font-weight:700;font-size:16px}
+.btn.doux{background:var(--surface);color:var(--ink);border:1.5px solid var(--line)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.retour{align-self:flex-start;background:var(--surface);border:1.5px solid var(--line);border-radius:999px;padding:8px 16px 8px 10px;display:flex;align-items:center;gap:6px;font-weight:600;font-size:15px}
+.titre-ecran{font-size:36px}
 
 /* Photos */
 .vignettes{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-.vignette{position:relative;aspect-ratio:3/4;border-radius:18px;overflow:hidden;background:var(--surface)}
+.vignette{position:relative;aspect-ratio:3/4;border-radius:22px;overflow:hidden;background:var(--surface)}
 .vignette img{width:100%;height:100%;object-fit:cover;display:block}
-.vignette button{position:absolute;top:8px;right:8px;width:34px;height:34px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;font-size:20px;line-height:1}
-.ajout{aspect-ratio:3/4;border-radius:18px;border:2px dashed var(--line);background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--muted);font-weight:700;font-size:16px}
+.vignette button{position:absolute;top:8px;right:8px;width:34px;height:34px;border-radius:50%;border:0;background:rgba(42,35,49,.65);color:#fff;font-size:20px;line-height:1}
+.ajout{aspect-ratio:3/4;border-radius:22px;border:2px dashed var(--mauve);background:var(--mauve-soft);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--ink);font-weight:600;font-size:16px}
 
 /* Attente */
-.attente{min-height:60vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;text-align:center}
-.points{display:flex;gap:10px}
-.points i{width:14px;height:14px;border-radius:50%;background:var(--accent);opacity:.35}
+.attente{min-height:62vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;text-align:center}
+.attente svg{width:150px;height:150px}
 @media (prefers-reduced-motion: no-preference){
-  .points i{animation:pt 1.2s ease-in-out infinite}
-  .points i:nth-child(2){animation-delay:.15s} .points i:nth-child(3){animation-delay:.3s}
-  @keyframes pt{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:1;transform:translateY(-8px)}}
+  .attente .b1{animation:flotte 3s ease-in-out infinite;transform-origin:center}
+  .attente .b2{animation:flotte 3s ease-in-out infinite .6s;transform-origin:center}
+  .attente .b3{animation:flotte 3s ease-in-out infinite 1.2s;transform-origin:center}
+  @keyframes flotte{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-8px) scale(1.05)}}
 }
 
 /* Verdict */
-.verdict{border-radius:28px;padding:26px 22px;display:flex;flex-direction:column;gap:12px}
-.verdict .rond{width:62px;height:62px;border-radius:50%;display:grid;place-items:center;color:var(--surface)}
-.verdict .mot{font-family:var(--display);font-size:40px;font-weight:800;letter-spacing:-.02em;line-height:1}
-.verdict .quoi{font-weight:700;font-size:16px;opacity:.8}
-.v-ok{background:var(--ok-bg)} .v-ok .rond{background:var(--ok)} .v-ok .mot{color:var(--ok)}
-.v-prudence{background:var(--warn-bg)} .v-prudence .rond{background:var(--warn)} .v-prudence .mot{color:var(--warn)}
-.v-eviter{background:var(--bad-bg)} .v-eviter .rond{background:var(--bad)} .v-eviter .mot{color:var(--bad)}
+.verdict{position:relative;overflow:hidden;border-radius:32px;padding:26px 22px;display:flex;flex-direction:column;gap:12px}
+.verdict .deco{position:absolute;right:-30px;top:-30px;width:170px;height:170px;pointer-events:none;opacity:.55}
+.verdict .rond{position:relative;width:62px;height:62px;border-radius:50%;display:grid;place-items:center;color:var(--surface)}
+.verdict .mot{position:relative;font-family:var(--display);font-size:42px;line-height:1}
+.verdict .quoi{position:relative;font-weight:600;font-size:15px;letter-spacing:.08em;text-transform:uppercase;opacity:.75}
+.verdict p{position:relative}
+.v-ok{background:var(--ok-bg)} .v-ok .rond{background:var(--ok)} .v-ok .mot{color:var(--ok)} .v-ok .deco{color:var(--sage)}
+.v-prudence{background:var(--warn-bg)} .v-prudence .rond{background:var(--warn)} .v-prudence .mot{color:var(--warn)} .v-prudence .deco{color:var(--blush)}
+.v-eviter{background:var(--bad-bg)} .v-eviter .rond{background:var(--bad)} .v-eviter .mot{color:var(--bad)} .v-eviter .deco{color:var(--blush)}
 .bloc{display:flex;flex-direction:column;gap:10px}
-.bloc h2{font-size:21px;font-weight:700}
-.ligne{background:var(--surface);border-radius:18px;padding:14px 16px;display:grid;grid-template-columns:12px 1fr;gap:12px;align-items:start}
-.ligne .pt{width:12px;height:12px;border-radius:50%;margin-top:7px;background:var(--muted)}
+.bloc h2{font-size:26px}
+.ligne{background:var(--surface);border-radius:20px;padding:14px 16px;display:grid;grid-template-columns:12px 1fr;gap:12px;align-items:start}
+.ligne .pt{width:12px;height:12px;border-radius:50%;margin-top:8px;background:var(--muted)}
 .ligne.ok .pt{background:var(--ok)} .ligne.prudence .pt{background:var(--warn)} .ligne.eviter .pt{background:var(--bad)}
-.ligne strong{display:block;font-size:18px}
+.ligne strong{display:block;font-size:18px;font-weight:600}
 .ligne p{font-size:16px;color:var(--muted)}
 .ligne p.conseil{color:var(--ink)}
-.alt{background:var(--surface);border-radius:18px;padding:14px 16px;border-left:5px solid var(--accent);display:flex;gap:14px;align-items:center}
-.alt img,.produit img{width:64px;height:64px;object-fit:contain;border-radius:12px;background:#fff;flex:0 0 64px}
+.alt{background:var(--sage-soft);border-radius:20px;padding:14px 16px;display:flex;gap:14px;align-items:center}
+.alt img,.produit img{width:64px;height:64px;object-fit:contain;border-radius:16px;background:#fff;flex:0 0 64px}
 .alt .txt{flex:1;min-width:0}
-.alt a,.produit a{color:var(--accent);font-size:14px;font-weight:700}
-.produit{display:flex;gap:14px;align-items:center}
+.alt strong{display:block;font-weight:600}
+.alt p{font-size:16px;color:var(--muted)}
+.alt a,.produit a{color:var(--accent);font-size:14px;font-weight:600}
+.produit{position:relative;display:flex;gap:14px;align-items:center}
 .produit img{width:76px;height:76px;flex-basis:76px}
 .credit{font-size:13px;color:var(--muted)}
-.alt strong{display:block}
-.alt p{font-size:16px;color:var(--muted)}
 ul.simple{margin:0;padding:0 0 0 20px;display:flex;flex-direction:column;gap:6px}
 
 /* Historique */
 .histo{display:flex;flex-direction:column;gap:8px}
-.histo button{display:flex;align-items:center;gap:12px;background:var(--surface);border:0;border-radius:16px;padding:12px 14px;text-align:left}
+.histo button{display:flex;align-items:center;gap:12px;background:var(--surface);border:0;border-radius:18px;padding:13px 16px;text-align:left}
 .histo .pt{width:12px;height:12px;border-radius:50%;flex:0 0 12px}
 .histo .pt.ok{background:var(--ok)} .histo .pt.prudence{background:var(--warn)} .histo .pt.eviter{background:var(--bad)}
 .histo .nm{flex:1;font-size:16px}
 .histo .dt{font-size:14px;color:var(--muted)}
 
-.erreur{background:var(--bad-bg);color:var(--bad);border-radius:16px;padding:14px 16px;font-size:16px}
+.erreur{background:var(--bad-bg);color:var(--bad);border-radius:18px;padding:14px 16px;font-size:16px}
 .note{font-size:14px;color:var(--muted);text-align:center}
 .note a,.carte a{color:var(--accent)}
-details summary{cursor:pointer;font-weight:700}
+details summary{cursor:pointer;font-weight:600}
 details ul{margin-top:10px}
 </style>
 </head>
@@ -160,15 +175,30 @@ details ul{margin-top:10px}
 <section class="ecran" id="e-accueil">
   <div class="tete">
     <div class="marque">
-      <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="var(--accent)"/><path d="M10 16.5l4 4 8-9" fill="none" stroke="var(--on-accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <svg width="26" height="26" viewBox="0 0 100 100" fill="none" stroke="var(--accent)" stroke-width="5" stroke-linecap="round" aria-hidden="true"><path d="M10 90C20 60 30 40 50 10"/><path d="M22 66c-10-2-16-8-18-16 9 0 16 5 18 16z"/><path d="M28 54c8-6 16-6 22-2-6 6-14 7-22 2z"/><path d="M34 42c-9-3-13-10-13-17 8 2 13 8 13 17z"/><path d="M40 30c7-6 15-7 21-4-5 6-13 8-21 4z"/></svg>
       Je peux ?
     </div>
     <button class="lien" type="button" id="b-reglages">Réglages</button>
   </div>
 
-  <h1 class="titre">Qu'est-ce que tu veux vérifier ?</h1>
+  <div class="couverture">
+    <svg class="deco" viewBox="0 0 360 160" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <path d="M52 6c18 0 36 10 41 28s-3 38-18 50-38 14-55 4S-3 58 4 38 34 6 52 6z" transform="translate(230 -30) scale(1.55)" fill="var(--mauve)" opacity=".85"/>
+      <path d="M30 8c14-8 36-6 50 6s18 34 8 50-30 30-50 28S6 76 4 58 16 16 30 8z" transform="translate(150 20) scale(.75)" fill="var(--blush)" opacity=".9"/>
+      <path d="M48 4c20-2 42 12 46 32s-8 42-28 52-44 6-56-10S0 38 12 22 28 6 48 4z" transform="translate(-30 -40) scale(.9)" fill="var(--sage)" opacity=".7"/>
+      <g fill="none" stroke="var(--cobalt)" stroke-width="7" stroke-linecap="round" opacity=".55"><path d="M96 92a46 46 0 0 1 92 0"/><path d="M112 92a30 30 0 0 1 60 0"/></g>
+      <path d="M300 128a16 16 0 1 1-12-26 12 12 0 1 0 12 26z" fill="var(--cobalt)" opacity=".8"/>
+      <g fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" transform="translate(250 40) scale(.9)"><path d="M10 90C20 60 30 40 50 10"/><path d="M22 66c-10-2-16-8-18-16 9 0 16 5 18 16z"/><path d="M28 54c8-6 16-6 22-2-6 6-14 7-22 2z"/><path d="M34 42c-9-3-13-10-13-17 8 2 13 8 13 17z"/><path d="M40 30c7-6 15-7 21-4-5 6-13 8-21 4z"/></g>
+      <g fill="none" stroke="var(--ink)" stroke-width="1.8" stroke-linecap="round" transform="translate(40 18)">
+        <path d="M18 60V28"/><circle cx="18" cy="20" r="6"/><path d="M18 14c0-6 4-10 4-10M18 14c0-6-4-10-4-10M12 20c-6 0-10-4-10-4M24 20c6 0 10-4 10-4"/><path d="M18 44c-8-2-12-8-12-12 6 0 12 4 12 12z"/>
+      </g>
+    </svg>
+    <span class="surtitre">Grossesse sereine</span>
+    <h1 class="titre">Je peux manger ça&nbsp;?</h1>
+    <p>Une photo d'un aliment, d'une carte ou d'un soin, et tu sais tout de suite.</p>
+  </div>
 
-  <div class="carte" id="c-bienvenue">
+  <div class="carte accueil-q" id="c-bienvenue">
     <h2 style="font-size:21px">Une seule question avant de commencer</h2>
     <p class="muted small">Es-tu immunisée contre la toxoplasmose ? C'est écrit sur ta prise de sang du début de grossesse.</p>
     <div class="puces" role="group" aria-label="Toxoplasmose">
@@ -183,21 +213,22 @@ details ul{margin-top:10px}
     <button type="button" class="btn plein" id="b-commencer" disabled>C'est parti</button>
   </div>
 
+  <h2 style="font-size:28px">Que veux-tu vérifier ?</h2>
   <div class="tuiles" id="tuiles">
     <button type="button" class="tuile t1" data-mode="produit">
-      <span class="ico"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9h18l-2 11H5L3 9z"/><path d="M8 9l4-6 4 6"/><path d="M9 13v4M15 13v4"/></svg></span>
+      <span class="ico"><svg class="blob" viewBox="0 0 100 100" aria-hidden="true"><path d="M52 6c18 0 36 10 41 28s-3 38-18 50-38 14-55 4S-3 58 4 38 34 6 52 6z" fill="currentColor" opacity=".55"/></svg><svg class="trait" width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9h18l-2 11H5L3 9z"/><path d="M8 9l4-6 4 6"/><path d="M9 13v4M15 13v4"/></svg></span>
       <span><strong>Un aliment</strong><span class="d">Photo des ingrédients<span class="si-api"> ou du code-barres</span></span></span>
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+      <span class="fleche" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span>
     </button>
     <button type="button" class="tuile t2" data-mode="menu">
-      <span class="ico"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3v8a2 2 0 0 0 2 2v8M10 3v8a2 2 0 0 1-2 2M8 3v6"/><path d="M17 21V3c-2 1.5-3 4-3 7s1 4 3 4"/></svg></span>
+      <span class="ico"><svg class="blob" viewBox="0 0 100 100" aria-hidden="true"><path d="M30 8c14-8 36-6 50 6s18 34 8 50-30 30-50 28S6 76 4 58 16 16 30 8z" fill="currentColor" opacity=".55"/></svg><svg class="trait" width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3v8a2 2 0 0 0 2 2v8M10 3v8a2 2 0 0 1-2 2M8 3v6"/><path d="M17 21V3c-2 1.5-3 4-3 7s1 4 3 4"/></svg></span>
       <span><strong>Un restaurant</strong><span class="d">Photo de la carte</span></span>
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+      <span class="fleche" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span>
     </button>
     <button type="button" class="tuile t3" data-mode="beaute">
-      <span class="ico"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6v3H9z"/><path d="M8 6h8l1 3v10a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V9l1-3z"/><path d="M10 13h4"/></svg></span>
+      <span class="ico"><svg class="blob" viewBox="0 0 100 100" aria-hidden="true"><path d="M48 4c20-2 42 12 46 32s-8 42-28 52-44 6-56-10S0 38 12 22 28 6 48 4z" fill="currentColor" opacity=".55"/></svg><svg class="trait" width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6v3H9z"/><path d="M8 6h8l1 3v10a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V9l1-3z"/><path d="M10 13h4"/></svg></span>
       <span><strong>Un soin, un maquillage</strong><span class="d">Photo des ingrédients<span class="si-api"> ou du code-barres</span></span></span>
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+      <span class="fleche" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span>
     </button>
     <button type="button" class="ecrire" id="b-ecrire">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg>
@@ -219,7 +250,7 @@ details ul{margin-top:10px}
   <button type="button" class="retour" data-retour>
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Retour
   </button>
-  <h1 class="titre" style="font-size:32px" id="photos-titre">Ta photo</h1>
+  <h1 class="titre-ecran" id="photos-titre">Ta photo</h1>
   <p class="muted" id="photos-aide"></p>
   <div class="vignettes" id="vignettes"></div>
   <details>
@@ -235,7 +266,7 @@ details ul{margin-top:10px}
   <button type="button" class="retour" data-retour>
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Retour
   </button>
-  <h1 class="titre" style="font-size:32px">Ta question</h1>
+  <h1 class="titre-ecran">Ta question</h1>
   <label for="question" class="muted">Un aliment, un plat ou un produit de beauté.</label>
   <textarea class="champ" id="question" placeholder="Ex : est-ce que je peux manger une burrata ? Ou : crème au rétinol ?"></textarea>
   <button type="button" class="btn plein" id="b-verifier-texte" disabled>Vérifier</button>
@@ -245,7 +276,12 @@ details ul{margin-top:10px}
 <!-- ============ ATTENTE ============ -->
 <section class="ecran hidden" id="e-attente">
   <div class="attente" aria-live="polite">
-    <div class="points" aria-hidden="true"><i></i><i></i><i></i></div>
+    <svg viewBox="0 0 150 150" aria-hidden="true">
+      <path class="b1" d="M52 6c18 0 36 10 41 28s-3 38-18 50-38 14-55 4S-3 58 4 38 34 6 52 6z" transform="translate(10 20) scale(.8)" fill="var(--mauve)" opacity=".8"/>
+      <path class="b2" d="M30 8c14-8 36-6 50 6s18 34 8 50-30 30-50 28S6 76 4 58 16 16 30 8z" transform="translate(62 10) scale(.6)" fill="var(--blush)" opacity=".9"/>
+      <path class="b3" d="M48 4c20-2 42 12 46 32s-8 42-28 52-44 6-56-10S0 38 12 22 28 6 48 4z" transform="translate(55 70) scale(.65)" fill="var(--sage)" opacity=".85"/>
+      <g fill="none" stroke="var(--ink)" stroke-width="2.2" stroke-linecap="round" transform="translate(40 30) scale(.8)"><path d="M10 90C20 60 30 40 50 10"/><path d="M22 66c-10-2-16-8-18-16 9 0 16 5 18 16z"/><path d="M28 54c8-6 16-6 22-2-6 6-14 7-22 2z"/><path d="M34 42c-9-3-13-10-13-17 8 2 13 8 13 17z"/><path d="M40 30c7-6 15-7 21-4-5 6-13 8-21 4z"/></g>
+    </svg>
     <h2 style="font-size:26px" id="attente-txt">Je lis l'étiquette…</h2>
     <p class="muted small">Environ 15 secondes</p>
   </div>
@@ -265,7 +301,7 @@ details ul{margin-top:10px}
   <button type="button" class="retour" data-retour>
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Retour
   </button>
-  <h1 class="titre" style="font-size:32px">Réglages</h1>
+  <h1 class="titre-ecran">Réglages</h1>
   <div class="carte">
     <h2 style="font-size:19px">Immunisée contre la toxoplasmose ?</h2>
     <div class="puces" role="group" aria-label="Toxoplasmose">
@@ -527,6 +563,7 @@ details ul{margin-top:10px}
     prudence: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M12 6v8M12 18.5v.01"/></svg>',
     eviter: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg>'
   };
+  var DECO = '<svg class="deco" viewBox="0 0 100 100" aria-hidden="true"><path d="M30 8c14-8 36-6 50 6s18 34 8 50-30 30-50 28S6 76 4 58 16 16 30 8z" fill="currentColor"/><g fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" opacity=".6" transform="translate(18 6) scale(.75)"><path d="M10 90C20 60 30 40 50 10"/><path d="M22 66c-10-2-16-8-18-16 9 0 16 5 18 16z"/><path d="M28 54c8-6 16-6 22-2-6 6-14 7-22 2z"/><path d="M34 42c-9-3-13-10-13-17 8 2 13 8 13 17z"/><path d="M40 30c7-6 15-7 21-4-5 6-13 8-21 4z"/></g></svg>';
   function mots(v, d){
     var beaute = d.mode === "beaute" || d.categorie === "beaute";
     if (v === "ok") return beaute ? "Oui, tu peux l'utiliser" : "Oui, tu peux en manger";
@@ -551,14 +588,14 @@ details ul{margin-top:10px}
   function afficher(d){
     var r = $("resultat");
     if (d.lisible === false){
-      r.innerHTML = '<div class="verdict v-prudence"><span class="rond">' + ICONES.prudence + '</span><span class="mot" style="font-size:32px">Photo difficile à lire</span><p>' + esc(d.resume || "Reprends la photo de plus près, sans reflet.") + '</p></div>';
+      r.innerHTML = '<div class="verdict v-prudence">' + DECO + '<span class="rond">' + ICONES.prudence + '</span><span class="mot" style="font-size:32px">Photo difficile à lire</span><p>' + esc(d.resume || "Reprends la photo de plus près, sans reflet.") + '</p></div>';
       return;
     }
     var v = norm(d.verdict), el = d.elements || [], html = "";
     if (d.mode === "menu"){
       var groupes = { ok: [], prudence: [], eviter: [] };
       el.forEach(function(it){ groupes[norm(it.verdict)].push(it); });
-      html += '<div class="verdict v-ok" style="gap:8px"><span class="quoi">' + esc(d.titre || "La carte") + '</span><span class="mot" style="font-size:34px">' +
+      html += '<div class="verdict v-ok" style="gap:8px">' + DECO + '<span class="quoi">' + esc(d.titre || "La carte") + '</span><span class="mot" style="font-size:36px">' +
         (groupes.ok.length ? groupes.ok.length + " plat" + (groupes.ok.length > 1 ? "s" : "") + " pour toi" : "Peu de choix sûrs") + '</span><p>' + esc(d.resume) + '</p></div>';
       [["ok","Tu peux prendre"],["prudence","Demande avant de commander"],["eviter","À éviter"]].forEach(function(g){
         if (groupes[g[0]].length) html += '<div class="bloc"><h2>' + g[1] + '</h2>' + groupes[g[0]].map(ligne).join("") + '</div>';
@@ -566,7 +603,7 @@ details ul{margin-top:10px}
       html += liste("Questions à poser au serveur", d.questions);
     } else {
       var photoProduit = d.source && sure(d.source.image);
-      html += '<div class="verdict v-' + v + '">' +
+      html += '<div class="verdict v-' + v + '">' + DECO +
         (photoProduit ? '<div class="produit"><img src="' + esc(photoProduit) + '" alt="Photo du produit"><span class="rond">' + ICONES[v] + '</span></div>' : '<span class="rond">' + ICONES[v] + '</span>') +
         ((d.source && d.source.nom) || d.titre ? '<span class="quoi">' + esc((d.source && d.source.nom) || d.titre) + '</span>' : '') +
         '<span class="mot">' + mots(v, d) + '</span><p>' + esc(d.resume) + '</p></div>';
