@@ -57,7 +57,7 @@ async function chercherParNom(base, termes) {
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ erreur: "Méthode non autorisée." });
 
-  const cle = process.env.ANTHROPIC_API_KEY;
+  const cle = (process.env.ANTHROPIC_API_KEY || "").trim().replace(/^["']|["']$/g, "");
   if (!cle) return res.status(500).json({ erreur: "Le serveur n'est pas configuré (clé API manquante)." });
 
   let body = req.body || {};
