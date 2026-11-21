@@ -11,7 +11,7 @@ const MODES = ["produit", "menu", "beaute", "texte"];
 async function chercherProduit(baseUrl, codebarre) {
   try {
     const r = await fetch(`${baseUrl}/api/v2/product/${codebarre}.json?fields=product_name,brands,ingredients_text,ingredients_text_fr,image_front_small_url,image_front_url`, {
-      headers: { "User-Agent": "JePeuxMangerCa/1.0 (application personnelle)" },
+      headers: { "User-Agent": "NeufLunes/1.0 (application personnelle)" },
       signal: AbortSignal.timeout(6000),
     });
     if (!r.ok) return null;
@@ -40,7 +40,7 @@ async function chercherParNom(base, termes) {
       fields: "code,product_name,brands,image_front_small_url",
     });
     const r = await fetch(`${base.url}/cgi/search.pl?${q}`, {
-      headers: { "User-Agent": "JePeuxMangerCa/1.0 (application personnelle)" },
+      headers: { "User-Agent": "NeufLunes/1.0 (application personnelle)" },
       signal: AbortSignal.timeout(5000),
     });
     if (!r.ok) return null;

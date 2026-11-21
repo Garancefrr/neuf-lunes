@@ -1,5 +1,5 @@
 {
-  "name": "je-peux-manger-ca",
+  "name": "neuf-lunes",
   "private": true,
   "description": "Application pour femme enceinte : photo d'une étiquette ou d'une carte de restaurant, verdict selon Santé publique France.",
   "engines": { "node": ">=18" }

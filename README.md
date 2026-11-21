@@ -1,4 +1,4 @@
-# Je peux manger ça ?
+# Neuf Lunes
 
 Application web pour femme enceinte : on photographie la liste des ingrédients d'un aliment, la carte d'un restaurant ou la liste d'ingrédients d'un produit de beauté. L'application dit ce qui est sans souci, avec prudence ou à éviter, et propose des alternatives. Pour les aliments et les cosmétiques, une photo du code-barres suffit : les ingrédients sont recherchés dans les bases publiques Open Food Facts et Open Beauty Facts. Règles : Santé publique France (2025) pour l'alimentation, ANSM pour les cosmétiques.
 
@@ -20,7 +20,7 @@ Application web pour femme enceinte : on photographie la liste des ingrédients 
 | `ANTHROPIC_API_KEY` | La clé créée sur console.anthropic.com (rubrique API Keys) |
 | `CODE_ACCES` | Un code au choix, à donner aux personnes qui utilisent l'appli |
 
-3. Cliquer sur **Deploy**. L'adresse obtenue (par exemple `je-peux-manger-ca.vercel.app`) est celle à envoyer.
+3. Cliquer sur **Deploy**. L'adresse obtenue (par exemple `neuf-lunes.vercel.app`) est celle à envoyer.
 
 Pour changer le code d'accès plus tard : modifier `CODE_ACCES` dans Vercel (Settings, Environment Variables), puis relancer un déploiement.
 
