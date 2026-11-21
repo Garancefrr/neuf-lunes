@@ -24,6 +24,11 @@ Application web pour femme enceinte : on photographie la liste des ingrédients 
 
 Pour changer le code d'accès plus tard : modifier `CODE_ACCES` dans Vercel (Settings, Environment Variables), puis relancer un déploiement.
 
+## Installer l'appli sur un téléphone
+
+- **iPhone** : ouvrir l'adresse dans Safari, bouton Partager, puis « Sur l'écran d'accueil ».
+- **Android** : ouvrir l'adresse dans Chrome, puis le bouton « Installer l'appli » sur l'accueil de Neuf Lunes (ou le menu de Chrome, « Installer l'application »).
+
 ## Coût
 
 Chaque analyse est facturée par Anthropic sur la clé API, à l'usage. Il est conseillé de fixer une limite de dépense mensuelle dans console.anthropic.com (Settings, Limits).

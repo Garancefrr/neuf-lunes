@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#f8f5f3">
 <title>Neuf Lunes</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Neuf Lunes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
@@ -234,6 +241,17 @@ details ul{margin-top:10px}
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg>
       Ou écrire ma question
     </button>
+  </div>
+
+  <div class="carte hidden" id="c-installer" style="background:var(--sage-soft)">
+    <h2 style="font-size:22px">Garde Neuf Lunes sur ton téléphone</h2>
+    <p class="muted small" id="installer-txt">Ajoute l'appli sur ton écran d'accueil pour l'ouvrir en un geste.</p>
+    <ol class="simple small hidden" id="installer-ios" style="padding-left:22px">
+      <li>Appuie sur le bouton <strong>Partager</strong> de Safari (le carré avec une flèche vers le haut).</li>
+      <li>Choisis <strong>Sur l'écran d'accueil</strong>.</li>
+      <li>Appuie sur <strong>Ajouter</strong>.</li>
+    </ol>
+    <button type="button" class="btn plein" id="b-installer">Installer l'appli</button>
   </div>
 
   <div class="bloc hidden" id="b-histo">
@@ -645,6 +663,26 @@ details ul{margin-top:10px}
     });
   }
   $("b-effacer").onclick = function(){ store.set("historique", []); dessinerHisto(); $("b-effacer").textContent = "Historique effacé"; };
+
+  // ---------- Installation sur le téléphone (version en ligne) ----------
+  var invite = null;
+  function installee(){ return (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true; }
+  if (avecCode && !installee()){
+    var ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    if (ios){
+      $("c-installer").classList.remove("hidden");
+      $("b-installer").onclick = function(){ $("installer-ios").classList.remove("hidden"); $("installer-txt").textContent = "Sur iPhone, l'ajout se fait depuis Safari, en trois gestes :"; $("b-installer").classList.add("hidden"); };
+    }
+    window.addEventListener("beforeinstallprompt", function(e){
+      e.preventDefault(); invite = e;
+      $("c-installer").classList.remove("hidden");
+      $("b-installer").onclick = async function(){ invite.prompt(); var choix = await invite.userChoice; if (choix && choix.outcome === "accepted") $("c-installer").classList.add("hidden"); invite = null; };
+    });
+    window.addEventListener("appinstalled", function(){ $("c-installer").classList.add("hidden"); });
+  }
+  if (avecCode && "serviceWorker" in navigator){
+    window.addEventListener("load", function(){ navigator.serviceWorker.register("/sw.js").catch(function(){}); });
+  }
 
   // ---------- Démarrage ----------
   majAccueil(); dessinerHisto(); dessinerVignettes();
