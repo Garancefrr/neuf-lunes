@@ -64,7 +64,8 @@ module.exports = async function handler(req, res) {
   if (typeof body === "string") { try { body = JSON.parse(body || "{}"); } catch (e) { body = {}; } }
   const { code, mode, toxo, precision, images } = body;
 
-  if (!process.env.CODE_ACCES || code !== process.env.CODE_ACCES) {
+  // Code facultatif : vérifié seulement si CODE_ACCES est défini dans Vercel (il voyage caché dans le lien)
+  if (process.env.CODE_ACCES && code !== process.env.CODE_ACCES) {
     return res.status(401).json({ erreur: "Code d'accès incorrect.", code: "code" });
   }
   if (!MODES.includes(mode)) return res.status(400).json({ erreur: "Type d'analyse inconnu." });

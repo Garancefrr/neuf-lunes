@@ -365,7 +365,13 @@ details ul{margin-top:10px}
 
   // ---------- Profil ----------
   var avecCode = BACKEND === "api";
-  if (!avecCode) document.querySelectorAll(".code-bloc, .si-api").forEach(function(e){ e.classList.add("hidden"); });
+  document.querySelectorAll(".code-bloc").forEach(function(e){ e.classList.add("hidden"); });
+  if (!avecCode) document.querySelectorAll(".si-api").forEach(function(e){ e.classList.add("hidden"); });
+  // Le code d'accès arrive caché dans le lien (?code=...) : on le garde et on nettoie l'adresse
+  try {
+    var params = new URLSearchParams(location.search);
+    if (params.get("code")) { store.set("code", params.get("code")); params.delete("code"); history.replaceState(null, "", location.pathname + (params.toString() ? "?" + params : "") + location.hash); }
+  } catch(e) {}
   function toxo(){ return store.get("toxo", null); }
   function majPuces(){
     document.querySelectorAll("[data-toxo]").forEach(function(b){ b.setAttribute("aria-pressed", String(b.dataset.toxo === (choixToxo || toxo()))); });
@@ -379,13 +385,12 @@ details ul{margin-top:10px}
   });
   $("code").addEventListener("input", majCommencer);
   $("code2").addEventListener("change", function(){ store.set("code", $("code2").value.trim()); });
-  function majCommencer(){ $("b-commencer").disabled = !(choixToxo && (!avecCode || $("code").value.trim())); }
+  function majCommencer(){ $("b-commencer").disabled = !choixToxo; }
   $("b-commencer").onclick = function(){
     store.set("toxo", choixToxo);
-    if (avecCode) store.set("code", $("code").value.trim());
     choixToxo = null; majAccueil();
   };
-  function pret(){ return !!toxo() && (!avecCode || !!store.get("code", "")); }
+  function pret(){ return !!toxo(); }
   function majAccueil(){
     var ok = pret();
     $("c-bienvenue").classList.toggle("hidden", ok);
@@ -515,7 +520,7 @@ details ul{margin-top:10px}
       });
       var data = null; try { data = await r.json(); } catch(e) {}
       if (r.status === 413) throw new Error("Les photos sont trop lourdes. Envoie-en moins à la fois.");
-      if (r.status === 401){ store.set("code", ""); throw new Error("Le code d'accès n'est pas bon. Corrige-le dans Réglages."); }
+      if (r.status === 401) throw new Error("Ce lien n'est pas complet. Rouvre l'appli avec le lien qu'on t'a envoyé.");
       if (!r.ok) throw new Error((data && data.erreur) || "Une erreur est survenue. Réessaie.");
       return data;
     }

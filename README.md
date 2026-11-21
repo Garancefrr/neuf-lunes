@@ -18,7 +18,7 @@ Application web pour femme enceinte : on photographie la liste des ingrédients 
 | Nom | Valeur |
 |---|---|
 | `ANTHROPIC_API_KEY` | La clé créée sur console.anthropic.com (rubrique API Keys) |
-| `CODE_ACCES` | Un code au choix, à donner aux personnes qui utilisent l'appli |
+| `CODE_ACCES` | Facultatif. Un code au choix : il est caché dans le lien à partager, sous la forme `https://neuf-lunes.vercel.app/?code=LE_CODE`. La personne n'a rien à taper. Sans cette variable, l'appli est ouverte à tous. |
 
 3. Cliquer sur **Deploy**. L'adresse obtenue (par exemple `neuf-lunes.vercel.app`) est celle à envoyer.
 
