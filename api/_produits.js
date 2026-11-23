@@ -5,7 +5,7 @@ const BASES = {
   beaute: { nom: "Open Beauty Facts", url: "https://world.openbeautyfacts.org" },
   aliment: { nom: "Open Food Facts", url: "https://world.openfoodfacts.org" },
 };
-const CHAMPS = "code,product_name,brands,categories_tags,ingredients_text,ingredients_text_fr,image_front_small_url,image_front_url";
+const CHAMPS = "code,product_name,brands,categories_tags,allergens_tags,ingredients_text,ingredients_text_fr,image_front_small_url,image_front_url";
 const MAX_CANDIDATS = 12;
 const MAX_CHOIX = 3;
 const MAX_INGREDIENTS = 2500; // une liste plus longue est écartée : on ne valide jamais une liste coupée
@@ -24,9 +24,9 @@ const INTERDITS_COLLES = {
   aliment: /alcool|alcohol|laitcru|laitscrus|cremecrue|rawmilk|rohmilch|lattecrudo|lechecruda|unpasteuri|nonpasteuri|soja|tofu|reglisse|espadon|marlin|requin|anguille|dorade|tarama|surimi|roquefort|camembert|coulommiers|munster|gorgonzola|maroilles|livarot|epoisses|chaource|neufchatel|vacherin|reblochon|morbier|raclette|burrata|mozzarella|rillettes|saucisson|chorizo|jambon|bayonne|serrano|sushi|sashimi|guarana|cafeine|caffeine|taurine|rhum|cognac|kirsch|armagnac|calvados|marsala|whisky|vodka|liqueur/,
 };
 const LAIT_CRU = /\b(laits?|cremes?|beurres?)\b(?:\s+\w+){0,3}?\s+crue?s?\b|\braw\b(?:\s+\w+){0,2}\s+milk\b|\bmilk\b(?:\s+\w+){0,2}\s+raw\b|\bunpasteuri[sz]ed\b|\bnon pasteuri\w*|\brohmilch\b|\blatte\b(?:\s+\w+){0,3}?\s+crudo\b|\bleche\b(?:\s+\w+){0,3}?\s+cruda\b/;
-const MOT_LAIT = /\b(laits?|milk|cremes?|cream|fromages?|cheeses?|brebis|chevres?|caille|lactoserum|whey|babeurre|buttermilk|thermise\w*)\b/;
+const MOT_LAIT = /\b(laits?|milk|cremes?|cream|beurres?|butter|fromages?|cheeses?|brebis|chevres?|caille|curds?|lactoserum|whey|lactose|babeurre|buttermilk|yaourts?|yogurts?|yoghurts?|kefir|skyr|faisselle|mascarpone|ricotta|pecorino|cheddar|cantal|salers|manchego|grana|gouda|edam|mimolette|comte|emmental|emmentaler|beaufort|gruyere|parmesan|parmigiano|thermise\w*)\b/;
 // Liste fermée des formules acceptées : tout autre tournure autour du lait est refusée.
-const FORME_PASTEURISEE = /^(?:(?:laits?|cremes?)(?: de vache| entiers?| entiere| (?:demi |partiellement )?ecreme(?:e|s|es)?)* pasteurise(?:e|s|es)?|(?:milk|cream)(?: whole)? pasteuri[sz]ed|pasteuri[sz]ed(?: whole| cow s| cows| cow| skimmed)* (?:milk|cream))(?: \d+)*$/;
+const FORME_PASTEURISEE = /^(?:(?:laits?|cremes?|beurres?)(?: de vache| entiers?| entiere| (?:demi |partiellement )?ecreme(?:e|s|es)?)* pasteurise(?:e|s|es)?|(?:milk|cream)(?: whole)? pasteuri[sz]ed|pasteuri[sz]ed(?: whole| cow s| cows| cow| skimmed)* (?:milk|cream))(?: \d+)*$/;
 const LAIT_ETRANGER = /milch|melk|kaese|kaas|labaustausch|\b(latte|leche|leite|mjolk|lab|kulturen|caglio|fermenti|cuajo|cuajada|fermentos|kase|queso|formaggio)\b/;
 const FERMENTE = /\b(presures?|rennets?|coagulants?|coagulantes?|enzymes?|ferments?|cultures?|caille|curds?)\b/;
 // Fromage ou produit fermenté : seuls ces ingrédients sont admis, en plus du lait pasteurisé. Tout le reste l'écarte.
@@ -60,7 +60,9 @@ function interdit(p, categorie) {
   if (texteInterdit(nomComplet(p), categorie) || listes.some((l) => texteInterdit(l, categorie))) return true;
   if (categorie !== "aliment") return false;
   // Tout produit contenant du lait doit dire clairement que ce lait est pasteurisé.
-  const laitier = estFromage(p) || listes.some((l) => MOT_LAIT.test(mots(l).join(" ")));
+  if (listes.some((l) => /\b(cru|crue|crus|crues|raw|thermise\w*)\b/.test(mots(l).join(" ")))) return true;
+  const allergeneLait = Array.isArray(p.allergens_tags) && p.allergens_tags.includes("en:milk");
+  const laitier = allergeneLait || estFromage(p) || MOT_LAIT.test(mots(p.product_name).join(" ")) || listes.some((l) => MOT_LAIT.test(mots(l).join(" ")));
   if (laitier && !listes.every(laitPasteurise)) return true;
   // Fromage ou produit fermenté : liste fermée d'ingrédients.
   return laitierFermente(p) && !listes.every(baseFermenteeSeule);
