@@ -23,8 +23,20 @@ const INTERDITS_COLLES = {
   beaute: /retinol|retinal|retinyl|retinoate|tretinoin|adapalene|tazarotene|hydroxypinacolone|hydroquinone|salicyl|paraben|benzophenone|oxybenzone|methoxycinnamate|octinoxate|homosalate|methylbenzylidene|octocrylene|phenoxyethanol|parfum|fragrance|butylphenyl|phenylenediamine|resorcinol|triclosan|cyclopentasiloxane|cyclotetrasiloxane|cyclomethicone|thioglycolate|dihydroxyacetone/,
   aliment: /alcool|alcohol|laitcru|laitscrus|cremecrue|rawmilk|rohmilch|lattecrudo|lechecruda|unpasteuri|nonpasteuri|soja|tofu|reglisse|espadon|marlin|requin|anguille|dorade|tarama|surimi|roquefort|camembert|coulommiers|munster|gorgonzola|maroilles|livarot|epoisses|chaource|neufchatel|vacherin|reblochon|morbier|raclette|burrata|mozzarella|rillettes|saucisson|chorizo|jambon|bayonne|serrano|sushi|sashimi|guarana|cafeine|caffeine|taurine|rhum|cognac|kirsch|armagnac|calvados|marsala|whisky|vodka|liqueur/,
 };
-const LAIT_CRU = /\b(laits?|cremes?)\b(?:\s+\w+){0,3}?\s+crue?s?\b|\braw\b(?:\s+\w+){0,2}\s+milk\b|\bmilk\b(?:\s+\w+){0,2}\s+raw\b|\bunpasteuri[sz]ed\b|\bnon pasteuri\w*|\brohmilch\b|\blatte crudo\b|\bleche cruda\b/;
-const PASTEURISE = /\bpasteuri[sz]\w*/;
+const LAIT_CRU = /\b(laits?|cremes?)\b(?:\s+\w+){0,3}?\s+crue?s?\b|\braw\b(?:\s+\w+){0,2}\s+milk\b|\bmilk\b(?:\s+\w+){0,2}\s+raw\b|\bunpasteuri[sz]ed\b|\bnon pasteuri\w*|\brohmilch\b|\blatte\b(?:\s+\w+){0,3}?\s+crudo\b|\bleche\b(?:\s+\w+){0,3}?\s+cruda\b/;
+const MOT_LAIT = /\b(laits?|milk|cremes?|cream)\b/;
+const LAIT_PASTEURISE = /\b(laits?|milk|cremes?|cream)\b(?:\s+\w+){0,3}?\s+pasteuri[sz]\w*|\bpasteuri[sz]\w*(?:\s+\w+){0,2}?\s+(laits?|milk|cremes?|cream)\b/;
+const NEGATION_PASTEUR = /\b(non|not|pas|sans|without|nicht|no|ohne|senza|sin)\b(?:\s+\w+){0,2}?\s+pasteuri/;
+const FERMENTE = /\b(presures?|rennets?|coagulants?|coagulantes?|enzymes?|ferments?|cultures?)\b/;
+
+// Chaque mention de lait ou de crème doit être dite pasteurisée, sans négation.
+function laitPasteurise(liste) {
+  if (NEGATION_PASTEUR.test(mots(liste).join(" "))) return false;
+  const laits = liste.split(/[,;]/).map((s) => mots(s).join(" ")).filter((s) => MOT_LAIT.test(s));
+  return laits.length > 0 && laits.every((s) => LAIT_PASTEURISE.test(s));
+}
+// Fromage, ou produit laitier fermenté qui pourrait en être un.
+const laitierFermente = (p) => estFromage(p) || toutesListes(p).some((l) => { const t = mots(l).join(" "); return MOT_LAIT.test(t) && FERMENTE.test(t); });
 
 // Aucun produit au lait cru n'est recommandé, même un fromage à pâte cuite : l'identité du fromage ne peut pas être garantie.
 function texteInterdit(s, categorie) {
@@ -38,8 +50,8 @@ function interdit(p, categorie) {
   const listes = toutesListes(p);
   if (!listes.length || illisible(p.product_name) || illisible(p.brands) || listes.some(illisible)) return true;
   if (texteInterdit(nomComplet(p), categorie) || listes.some((l) => texteInterdit(l, categorie))) return true;
-  // Un fromage n'est recommandé que si chaque liste dit clairement qu'il est pasteurisé.
-  return categorie === "aliment" && estFromage(p) && !listes.every((l) => PASTEURISE.test(mots(l).join(" ")));
+  // Un fromage ou produit fermenté n'est recommandé que si chaque liste dit clairement que son lait est pasteurisé.
+  return categorie === "aliment" && laitierFermente(p) && !listes.every(laitPasteurise);
 }
 const nettoyer = (s, max) => String(s || "").replace(/\p{Cf}/gu, "").replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
 
@@ -251,7 +263,7 @@ function estFromage(p) {
   const nom = mots(p.product_name).join(" ");
   if (FROMAGES_CUITS.test(nom) || A_RISQUE.test(nom) || /\b(fromages?|cheeses?|kase|queso|formaggio)\b/.test(nom)) return true;
   if (Array.isArray(p.categories_tags) && p.categories_tags.some((t) => /(^|:|-)(cheeses?|fromages?)(-|$)/.test(String(t)))) return true;
-  return toutesListes(p).some((l) => /\b(presure|rennet|coagulant)\b/.test(mots(l).join(" ")));
+  return toutesListes(p).some((l) => /\b(presures?|rennets?|coagulants?|coagulantes?)\b/.test(mots(l).join(" ")));
 }
 
 module.exports = { BASES, photoSure, identifierProduit, recommander, meilleurProduit, interdit, estFromage };
