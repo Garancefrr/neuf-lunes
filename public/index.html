@@ -653,6 +653,7 @@ details ul{margin-top:10px}
     var img = sure(a.image), lien = (typeof a.lien === "string" && /^https:\/\/world\.open(beauty|food)facts\.org\//.test(a.lien)) ? a.lien : null;
     return '<div class="alt">' + (img ? '<img src="' + esc(img) + '" alt="" loading="lazy">' : '') +
       '<div class="txt"><strong>' + esc(a.nom) + '</strong>' + (a.pourquoi ? '<p>' + esc(a.pourquoi) + '</p>' : '') +
+      (a.precaution ? '<p style="color:var(--warn);font-size:15px;font-weight:600">' + esc(a.precaution) + '</p>' : '') +
       (a.verifie ? '<p style="color:var(--ok);font-size:14px;font-weight:600">✓ Liste d\'ingrédients relue automatiquement</p>' : '') +
       (lien ? '<a href="' + esc(lien) + '" target="_blank" rel="noopener">Voir le produit</a>' : '') + '</div></div>';
   }

@@ -5,7 +5,7 @@ const BASES = {
   beaute: { nom: "Open Beauty Facts", url: "https://world.openbeautyfacts.org" },
   aliment: { nom: "Open Food Facts", url: "https://world.openfoodfacts.org" },
 };
-const CHAMPS = "code,product_name,brands,ingredients_text,ingredients_text_fr,image_front_small_url,image_front_url";
+const CHAMPS = "code,product_name,brands,categories_tags,ingredients_text,ingredients_text_fr,image_front_small_url,image_front_url";
 const MAX_CANDIDATS = 12;
 const MAX_CHOIX = 3;
 const MAX_INGREDIENTS = 2500; // une liste plus longue est écartée : on ne valide jamais une liste coupée
@@ -232,13 +232,19 @@ Au moindre doute, écarte-le. Une liste vide est une bonne réponse si aucun pro
     const p = liste[c.numero - 1];
     if (!p || pris.has(c.numero) || produits.length >= MAX_CHOIX) continue;
     pris.add(c.numero);
-    // Précaution garantie par le code, même si la relecture l'oublie.
-    let pourquoi = String(c.pourquoi || "").slice(0, 240).trim();
-    const fromage = categorie === "aliment" && (FROMAGES_CUITS.test(mots(p.product_name).join(" ")) || /\b(fromages?|cheese)\b/.test(mots(p.product_name).join(" ")));
-    if (fromage && !mots(pourquoi).includes("croute")) pourquoi = `${pourquoi} À manger sans la croûte.`.trim();
-    produits.push({ nom: nettoyer(nomComplet(p), 120), pourquoi, image: image(p), lien: `${base.url}/product/${p.code}`, base: base.nom, verifie: true });
+    const produit = { nom: nettoyer(nomComplet(p), 120), pourquoi: nettoyer(c.pourquoi, 240), image: image(p), lien: `${base.url}/product/${p.code}`, base: base.nom, verifie: true };
+    // Précaution fixée par le code, affichée à part : elle ne dépend pas du texte rédigé par l'IA.
+    if (categorie === "aliment" && estFromage(p)) produit.precaution = "À manger sans la croûte.";
+    produits.push(produit);
   }
   return produits;
 }
 
-module.exports = { BASES, photoSure, identifierProduit, recommander, meilleurProduit, interdit };
+function estFromage(p) {
+  const nom = mots(p.product_name).join(" ");
+  if (FROMAGES_CUITS.test(nom) || A_RISQUE.test(nom) || /\b(fromages?|cheeses?|kase|queso|formaggio)\b/.test(nom)) return true;
+  if (Array.isArray(p.categories_tags) && p.categories_tags.some((t) => /(^|:|-)(cheeses?|fromages?)(-|$)/.test(String(t)))) return true;
+  return toutesListes(p).some((l) => /\b(presure|rennet|coagulant)\b/.test(mots(l).join(" ")));
+}
+
+module.exports = { BASES, photoSure, identifierProduit, recommander, meilleurProduit, interdit, estFromage };
