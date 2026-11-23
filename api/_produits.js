@@ -82,15 +82,15 @@ async function ficheComplete(base, code) {
   }
 }
 
-// Aliments : moteur de recherche d'Open Food Facts, plus fiable, puis fiche complète de chaque résultat.
+// Aliments : moteur de recherche d'Open Food Facts, plus fiable. Il donne le nom et l'image, pas la liste d'ingrédients.
 async function chercherAliment(base, termes, taille) {
   try {
-    const q = new URLSearchParams({ q: String(termes).slice(0, 100), page_size: String(taille), fields: "code" });
+    const q = new URLSearchParams({ q: String(termes).slice(0, 100), page_size: String(taille), fields: "code,product_name,brands,image_front_small_url,image_front_url,ingredients_n" });
     const r = await fetch(`https://search.openfoodfacts.org/search?${q}`, { headers: { "User-Agent": "NeufLunes/1.0" }, signal: AbortSignal.timeout(4000) });
     if (r.ok) {
       const d = await r.json();
-      const codes = (Array.isArray(d.hits) ? d.hits : []).map((h) => String(h.code || "")).filter((c) => /^\d{8,14}$/.test(c)).slice(0, taille);
-      if (codes.length) return (await Promise.all(codes.map((c) => ficheComplete(base, c)))).filter(Boolean);
+      const resultats = (Array.isArray(d.hits) ? d.hits : []).map((h) => ({ ...h, code: String(h.code || ""), brands: Array.isArray(h.brands) ? h.brands.join(", ") : h.brands }));
+      if (resultats.length) return resultats;
     }
   } catch (e) { /* on passe à la recherche classique */ }
   return chercherClassique(base, termes, taille);
@@ -98,16 +98,38 @@ async function chercherAliment(base, termes, taille) {
 
 const chercher = (base, termes, taille) => (base === BASES.aliment ? chercherAliment : chercherClassique)(base, termes, taille);
 
+// La base bloque les rafales : peu de fiches, par petits groupes, en alternant entre les recherches.
+async function completerAliments(base, listes) {
+  const vus = new Set(), choisis = [];
+  for (let rang = 0; rang < 12 && choisis.length < 8; rang++) {
+    for (const liste of listes) {
+      const p = liste[rang];
+      if (!p || choisis.length >= 8 || vus.has(p.code)) continue;
+      vus.add(p.code);
+      if (p.ingredients_text || p.ingredients_text_fr) choisis.push(Promise.resolve(p));
+      else if (image(p) && Number(p.ingredients_n) > 0 && /^\d{8,14}$/.test(p.code)) choisis.push(p.code);
+    }
+  }
+  const fiches = [];
+  for (let i = 0; i < choisis.length; i += 3) {
+    const lot = await Promise.all(choisis.slice(i, i + 3).map((c) => (typeof c === "string" ? ficheComplete(base, c) : c)));
+    fiches.push(...lot.filter(Boolean));
+  }
+  return fiches;
+}
+
 // Retrouve la fiche du produit photographié. Mieux vaut pas d'image qu'une image du mauvais produit.
 function meilleurProduit(liste, marque, nom) {
-  const motsMarque = mots(marque), motsNom = mots(nom).filter((m) => m.length > 2 && !motsMarque.includes(m));
+  const racines = (s) => mots(s).map((m) => (m.length > 3 ? m.replace(/s$/, "") : m));
+  const motsMarque = racines(marque), motsNom = racines(nom).filter((m) => m.length > 2 && !motsMarque.includes(m));
   if (!motsNom.length || (!motsMarque.length && motsNom.length < 2)) return null;
   let meilleur = null, score = 0;
   for (const p of liste) {
     if (!image(p) || !/^\d{8,14}$/.test(String(p.code || ""))) continue;
-    const marqueProduit = mots(p.brands);
-    if (!motsMarque.every((m) => marqueProduit.includes(m))) continue;
-    const nomProduit = mots(p.product_name);
+    // Dans la base, la marque et le nom sont parfois inversés : on les compare ensemble.
+    const fiche = racines(`${p.brands || ""} ${p.product_name || ""}`);
+    if (!motsMarque.every((m) => fiche.includes(m))) continue;
+    const nomProduit = motsMarque.length ? fiche : racines(p.product_name);
     const communs = motsNom.filter((m) => nomProduit.includes(m)).length / motsNom.length;
     if (communs < (motsMarque.length ? 0.6 : 1)) continue;
     const s = communs + (ingredients(p) ? 0.01 : 0);
@@ -125,11 +147,12 @@ async function identifierProduit(categorie, identifie) {
 }
 
 async function candidats(base, categorie, recherches, exclu) {
-  const listes = await Promise.all(recherches.slice(0, 3).map((t) => chercher(base, t, 8)));
+  let listes = await Promise.all(recherches.slice(0, 3).map((t) => chercher(base, t, 12)));
+  if (categorie === "aliment") listes = [await completerAliments(base, listes)];
   const vus = new Set(), retenus = [];
   const nomExclu = exclu && exclu.nom ? mots(exclu.nom).join(" ") : null;
   // Un peu de chaque recherche, pour garder de la variété.
-  for (let rang = 0; rang < 8 && retenus.length < MAX_CANDIDATS; rang++) {
+  for (let rang = 0; rang < 12 && retenus.length < MAX_CANDIDATS; rang++) {
     for (const liste of listes) {
       const p = liste[rang];
       if (!p || retenus.length >= MAX_CANDIDATS) continue;
