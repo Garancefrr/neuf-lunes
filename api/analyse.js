@@ -3,8 +3,9 @@
 // Variable à définir dans Vercel : ANTHROPIC_API_KEY.
 
 const AnthropicSDK = require("@anthropic-ai/sdk");
-const { construireConsigne, lireJSON } = require("./_consigne.js");
+const { construireConsigne, lireJSON, reglesPour } = require("./_consigne.js");
 const { lireSession } = require("./_session.js");
+const { BASES, photoSure, identifierProduit, recommander } = require("./_produits.js");
 
 const Anthropic = AnthropicSDK.default || AnthropicSDK;
 const MODELE = "claude-sonnet-5-5";
@@ -16,8 +17,9 @@ const VERDICT = { type: "string", enum: ["ok", "prudence", "eviter"] };
 const SCHEMA = {
   type: "object",
   additionalProperties: false,
-  required: ["lisible", "categorie", "titre", "verdict", "resume", "elements", "alternatives", "questions", "a_verifier"],
+  required: ["lisible", "categorie", "titre", "produit_identifie", "verdict", "resume", "elements", "alternatives", "questions", "a_verifier"],
   properties: {
+    produit_identifie: { type: "object", additionalProperties: false, required: ["trouve", "marque", "nom"], properties: { trouve: { type: "boolean" }, marque: { type: "string" }, nom: { type: "string" } } },
     lisible: { type: "boolean" },
     categorie: { type: "string", enum: ["aliment", "beaute"] },
     titre: { type: "string" },
@@ -41,38 +43,6 @@ async function chercherProduit(baseUrl, codebarre) {
     return d && d.status === 1 ? d.product : null;
   } catch (e) {
     return null; // base indisponible : on continue avec la photo seule
-  }
-}
-
-const BASES = {
-  beaute: { nom: "Open Beauty Facts", url: "https://world.openbeautyfacts.org" },
-  aliment: { nom: "Open Food Facts", url: "https://world.openfoodfacts.org" },
-};
-
-// N'accepte que les photos hébergées par les bases Open Facts
-function photoSure(u) {
-  return typeof u === "string" && /^https:\/\/images\.open(beauty|food)facts\.org\/[\w\/.\-]+$/.test(u) ? u : null;
-}
-
-// Recherche d'un produit par son nom, pour illustrer une alternative
-async function chercherParNom(base, termes) {
-  try {
-    const q = new URLSearchParams({
-      search_terms: termes, search_simple: "1", action: "process", json: "1", page_size: "1",
-      fields: "code,product_name,brands,image_front_small_url",
-    });
-    const r = await fetch(`${base.url}/cgi/search.pl?${q}`, {
-      headers: { "User-Agent": "NeufLunes/1.0 (application personnelle)" },
-      signal: AbortSignal.timeout(5000),
-    });
-    if (!r.ok) return null;
-    const d = await r.json();
-    const p = d && d.products && d.products[0];
-    const image = p && photoSure(p.image_front_small_url);
-    if (!image) return null;
-    return { image, lien: /^\d{8,14}$/.test(p.code || "") ? `${base.url}/product/${p.code}` : null, base: base.nom };
-  } catch (e) {
-    return null;
   }
 }
 
@@ -132,18 +102,27 @@ Ingrédients : ${(p.ingredients_text_fr || p.ingredients_text).slice(0, 4000)}`;
     if (data.stop_reason === "max_tokens") return res.status(502).json({ erreur: "La réponse était trop longue. Envoie moins de photos à la fois." });
     const txt = (data.content || []).filter((c) => c.type === "text").map((c) => c.text).join("");
     const resultat = lireJSON(txt);
-    if (source) resultat.source = source;
+    const categorie = (mode === "beaute" || resultat.categorie === "beaute") ? "beaute" : "aliment";
 
-    // Photos des alternatives qui citent un produit précis (3 au maximum, en parallèle)
-    if (Array.isArray(resultat.alternatives)) {
-      const base = (mode === "beaute" || resultat.categorie === "beaute") ? BASES.beaute : BASES.aliment;
-      await Promise.all(resultat.alternatives.slice(0, 3).map(async (a) => {
-        const termes = a && typeof a.recherche === "string" ? a.recherche.trim().slice(0, 100) : "";
-        if (termes.length < 3) return;
-        const trouve = await chercherParNom(base, termes);
-        if (trouve) Object.assign(a, trouve);
-      }));
+    // Fiche du produit photographié, si son nom est lisible. Le verdict reste fondé sur la photo.
+    if (!source && resultat.lisible !== false && mode !== "menu") {
+      source = await identifierProduit(categorie, resultat.produit_identifie).catch(() => null);
     }
+    if (source) resultat.source = source;
+    delete resultat.produit_identifie;
+
+    // Produits réels du même type, gardés seulement après vérification de leurs ingrédients.
+    const idees = Array.isArray(resultat.alternatives) ? resultat.alternatives : [];
+    if (resultat.lisible !== false && mode !== "menu" && resultat.verdict !== "ok" && idees.length) {
+      try {
+        const situation = { immunisee: "est immunisée contre la toxoplasmose", non: "n'est pas immunisée contre la toxoplasmose" }[toxo] || "ne sait pas si elle est immunisée contre la toxoplasmose";
+        const produits = await recommander({ client, modele: MODELE, categorie, titre: resultat.titre, idees, regles: reglesPour(categorie), situation, exclu: source });
+        if (produits.length) resultat.alternatives = produits;
+      } catch (e) {
+        console.error("recommandations:", e && e.name, e && e.status);
+      }
+    }
+    if (Array.isArray(resultat.alternatives)) resultat.alternatives.forEach((a) => { if (a) delete a.recherche; });
     return res.status(200).json(resultat);
   } catch (e) {
     // Ne jamais journaliser les photos ni la question : seulement le type d'erreur.

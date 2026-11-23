@@ -653,7 +653,8 @@ details ul{margin-top:10px}
     var img = sure(a.image), lien = (typeof a.lien === "string" && /^https:\/\/world\.open(beauty|food)facts\.org\//.test(a.lien)) ? a.lien : null;
     return '<div class="alt">' + (img ? '<img src="' + esc(img) + '" alt="" loading="lazy">' : '') +
       '<div class="txt"><strong>' + esc(a.nom) + '</strong>' + (a.pourquoi ? '<p>' + esc(a.pourquoi) + '</p>' : '') +
-      (lien ? '<a href="' + esc(lien) + '" target="_blank" rel="noopener">Voir la fiche</a>' : '') + '</div></div>';
+      (a.verifie ? '<p style="color:var(--ok);font-size:14px;font-weight:600">✓ Ingrédients vérifiés</p>' : '') +
+      (lien ? '<a href="' + esc(lien) + '" target="_blank" rel="noopener">Voir le produit</a>' : '') + '</div></div>';
   }
   function liste(titre, arr){
     return (arr && arr.length) ? '<div class="bloc"><h2>' + titre + '</h2><div class="carte"><ul class="simple">' + arr.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join("") + '</ul></div></div>' : "";
@@ -692,7 +693,10 @@ details ul{margin-top:10px}
     }
     html += liste("À vérifier", d.a_verifier);
     if (d.source && d.source.base){
-      html += '<p class="note">Ingrédients trouvés grâce au code-barres ' + esc(d.source.codebarre) + ', dans la base <a href="' + esc(d.source.lien) + '" target="_blank" rel="noopener">' + esc(d.source.base) + '</a>.</p>';
+      var lienSource = (typeof d.source.lien === "string" && /^https:\/\/world\.open(beauty|food)facts\.org\//.test(d.source.lien)) ? d.source.lien : "#";
+      html += d.source.identifie
+        ? '<p class="note">Image trouvée d\'après le nom du produit. Vérifie que c\'est bien le tien : <a href="' + esc(lienSource) + '" target="_blank" rel="noopener">voir le produit sur ' + esc(d.source.base) + '</a>.</p>'
+        : '<p class="note">Ingrédients trouvés grâce au code-barres ' + esc(d.source.codebarre) + ', dans la base <a href="' + esc(lienSource) + '" target="_blank" rel="noopener">' + esc(d.source.base) + '</a>.</p>';
     }
     html += '<p class="note">En cas de doute, demande à ta sage-femme ou à ton pharmacien.</p>';
     r.innerHTML = html;
