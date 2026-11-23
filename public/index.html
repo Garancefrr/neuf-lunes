@@ -430,7 +430,7 @@ details ul{margin-top:10px}
         var avant = store.get("compte", null);
         if (avant !== d.compte){
           store.set("toxo", null);
-          if (avant) store.set("historique", []);
+          store.set("historique", []);
           store.set("compte", d.compte);
         }
         if (d.toxo && d.toxo !== toxo()) store.set("toxo", d.toxo);
