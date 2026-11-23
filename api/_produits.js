@@ -281,4 +281,18 @@ function estFromage(p) {
   return toutesListes(p).some((l) => /\b(fromages?|cheeses?|presures?|rennets?|coagulants?|coagulantes?)\b/.test(mots(l).join(" ")));
 }
 
-module.exports = { BASES, photoSure, identifierProduit, recommander, meilleurProduit, interdit, estFromage };
+// Garde-fou du verdict : une fiche collaborative qui cite une substance majeure ne peut jamais donner « oui » directement.
+const CRITIQUES = {
+  beaute: /\b(retin\w*|tretinoin\w*|isotretinoin\w*|adapalene|tazarotene|hydroquinone|essential oils?|huiles? essentielles?)\b/,
+  aliment: /\b(alcool|alcohol|vin|vins|biere|bieres|rhum|cognac|kirsch|armagnac|calvados|liqueur|marsala|whisky|vodka|espadon|marlin|requin)\b/,
+};
+function substanceCritique(p, categorie) {
+  const listes = toutesListes(p);
+  if (illisible(p.product_name) || listes.some(illisible)) return true;
+  return [p.product_name, ...listes].some((s) => {
+    const t = mots(s).join(" ").replace(/\bvinaigres? de vin\b/g, " ").replace(/\bsans (alcool|alcohol)\b/g, " ");
+    return CRITIQUES[categorie].test(t);
+  });
+}
+
+module.exports = { BASES, photoSure, identifierProduit, recommander, meilleurProduit, interdit, estFromage, nettoyer, substanceCritique };

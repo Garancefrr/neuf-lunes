@@ -911,10 +911,10 @@ details ul{margin-top:10px}
     // Liste d'ingrédients seule : le produit ne peut pas être reconnu, on propose d'ajouter une photo.
     var proposerPhoto = d === resultatEnCours && !d.source && (d.mode === "produit" || d.mode === "beaute") && photos.length > 0 && photos.length < 4;
     if (proposerPhoto) html += '<div class="carte accueil-q"><h2 style="font-size:21px">Tu veux voir ton produit ?</h2><p class="muted small">Une liste d\'ingrédients ne dit pas de quel produit il s\'agit. Ajoute une photo du devant, avec la marque et le nom, ou du code-barres.</p><button type="button" class="btn doux" id="b-photo-produit">Ajouter une photo du produit</button></div>';
-    html += blocSignalement();
+    if (consenti()) html += blocSignalement();
     html += '<p class="note">En cas de doute, demande à ta sage-femme ou à ton pharmacien.</p>';
     r.innerHTML = html;
-    brancherSignalement(d);
+    if (consenti()) brancherSignalement(d);
     if (proposerPhoto) $("b-photo-produit").onclick = function(){ pile = ["e-accueil", "e-photos"]; aller("e-photos", true); $("f-photo").click(); };
   }
 

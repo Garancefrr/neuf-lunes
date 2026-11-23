@@ -1,27 +1,12 @@
 // « Ce résultat me semble faux » : garde le message 90 jours, sans photo ni identifiant de compte.
+// La suppression après 90 jours est faite chaque jour par /api/purge-signalements.
 const crypto = require("crypto");
-const { put, list, del } = require("@vercel/blob");
-const { PERIODES, lireSession } = require("./_session.js");
+const { put } = require("@vercel/blob");
+const { PERIODES, CONSENTEMENT, lireSession } = require("./_session.js");
 
-const DUREE_MS = 90 * 24 * 3600 * 1000;
 const MODES = ["produit", "menu", "beaute", "texte"];
 const VERDICTS = ["ok", "prudence", "eviter"];
 const propre = (s, max) => String(s || "").replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\p{Cf}/gu, "").trim().slice(0, max);
-
-async function purger() {
-  try {
-    const limite = Date.now() - DUREE_MS;
-    let curseur;
-    do {
-      const page = await list({ prefix: "signalements/", limit: 200, cursor: curseur });
-      const anciens = page.blobs.filter((b) => new Date(b.uploadedAt).getTime() < limite).map((b) => b.url);
-      if (anciens.length) await del(anciens);
-      curseur = page.hasMore ? page.cursor : undefined;
-    } while (curseur);
-  } catch (e) {
-    console.error("purge:", e && e.name);
-  }
-}
 
 module.exports = async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
@@ -30,6 +15,7 @@ module.exports = async function handler(req, res) {
   let session = null;
   try { session = lireSession(req); } catch (e) { console.error("session:", e.name); }
   if (!session) return res.status(401).json({ erreur: "Connecte-toi pour continuer." });
+  if (session.consent !== CONSENTEMENT) return res.status(403).json({ erreur: "Ton accord est nécessaire.", consentement: true });
 
   const b = req.body || {};
   const commentaire = propre(b.commentaire, 500);
@@ -47,7 +33,6 @@ module.exports = async function handler(req, res) {
 
   try {
     await put(`signalements/${date.slice(0, 10)}/${crypto.randomUUID()}.json`, JSON.stringify(contenu), { access: "private", contentType: "application/json" });
-    await purger();
     return res.status(200).json({ ok: true });
   } catch (e) {
     console.error("signalement:", e && e.name);

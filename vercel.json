@@ -1,4 +1,5 @@
 {
   "regions": ["cdg1"],
-  "rewrites": [{ "source": "/confidentialite", "destination": "/api/confidentialite" }]
+  "rewrites": [{ "source": "/confidentialite", "destination": "/api/confidentialite" }],
+  "crons": [{ "path": "/api/purge-signalements", "schedule": "0 3 * * *" }]
 }
