@@ -204,7 +204,7 @@ Choisis au maximum ${MAX_CHOIX} produits, du plus proche au moins proche du prod
 - toutes ses listes d'ingrédients paraissent complètes, lisibles et cohérentes entre elles ;
 - AUCUN ingrédient d'aucune de ses listes n'est classé « à éviter » ou « avec prudence » dans les règles.
 Au moindre doute, écarte-le. Une liste vide est une bonne réponse si aucun produit ne convient.
-"numero" est le numéro de la fiche. "pourquoi" tient en une phrase simple, en français, qui dit en quoi il ressemble au produit remplacé. N'écris jamais qu'il est « sans risque ».`;
+"numero" est le numéro de la fiche. "pourquoi" tient en une phrase simple, en français, qui dit en quoi il ressemble au produit remplacé. Si le produit demande une précaution, elle doit figurer dans cette phrase (pour tout fromage : « à manger sans la croûte » ; pour un produit à cuire : « bien cuit »). N'écris jamais qu'il est « sans risque ».`;
 
   const reponse = await client.beta.messages.create({
     model: modele,
