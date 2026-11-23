@@ -24,7 +24,7 @@ const INTERDITS_COLLES = {
   aliment: /alcool|alcohol|laitcru|laitscrus|cremecrue|rawmilk|rohmilch|lattecrudo|lechecruda|unpasteuri|nonpasteuri|soja|tofu|reglisse|espadon|marlin|requin|anguille|dorade|tarama|surimi|roquefort|camembert|coulommiers|munster|gorgonzola|maroilles|livarot|epoisses|chaource|neufchatel|vacherin|reblochon|morbier|raclette|burrata|mozzarella|rillettes|saucisson|chorizo|jambon|bayonne|serrano|sushi|sashimi|guarana|cafeine|caffeine|taurine|rhum|cognac|kirsch|armagnac|calvados|marsala|whisky|vodka|liqueur/,
 };
 const LAIT_CRU = /\b(laits?|cremes?)\b(?:\s+\w+){0,3}?\s+crue?s?\b|\braw\b(?:\s+\w+){0,2}\s+milk\b|\bmilk\b(?:\s+\w+){0,2}\s+raw\b|\bunpasteuri[sz]ed\b|\bnon pasteuri\w*|\brohmilch\b|\blatte\b(?:\s+\w+){0,3}?\s+crudo\b|\bleche\b(?:\s+\w+){0,3}?\s+cruda\b/;
-const MOT_LAIT = /\b(laits?|milk|cremes?|cream)\b/;
+const MOT_LAIT = /\b(laits?|milk|cremes?|cream|fromages?|cheeses?|brebis|chevres?|caille|lactoserum|whey|babeurre|buttermilk|thermise\w*)\b/;
 // Liste fermée des formules acceptées : tout autre tournure autour du lait est refusée.
 const FORME_PASTEURISEE = /^(?:(?:laits?|cremes?)(?: de vache| entiers?| entiere| (?:demi |partiellement )?ecreme(?:e|s|es)?)* pasteurise(?:e|s|es)?|(?:milk|cream)(?: whole)? pasteuri[sz]ed|pasteuri[sz]ed(?: whole| cow s| cows| cow| skimmed)* (?:milk|cream))(?: \d+)*$/;
 const LAIT_ETRANGER = /milch|melk|kaese|kaas|labaustausch|\b(latte|leche|leite|mjolk|lab|kulturen|caglio|fermenti|cuajo|cuajada|fermentos|kase|queso|formaggio)\b/;
@@ -32,6 +32,7 @@ const FERMENTE = /\b(presures?|rennets?|coagulants?|coagulantes?|enzymes?|fermen
 
 // Ingrédient par ingrédient : chaque mention de lait doit être exactement une formule acceptée.
 function laitPasteurise(liste) {
+  if (/\b(cru|crue|crus|crues|raw|thermise\w*)\b/.test(mots(liste).join(" "))) return false;
   const segments = String(liste).split(/[,;:()\[\]{}.\/+|•·]/).map((s) => mots(s).join(" ")).filter(Boolean);
   const laits = segments.filter((s) => MOT_LAIT.test(s) || /pasteuri/.test(s));
   return laits.length > 0 && laits.every((s) => FORME_PASTEURISEE.test(s));
@@ -267,7 +268,7 @@ function estFromage(p) {
   const nom = mots(p.product_name).join(" ");
   if (FROMAGES_CUITS.test(nom) || A_RISQUE.test(nom) || /\b(fromages?|cheeses?|kase|queso|formaggio)\b/.test(nom)) return true;
   if (Array.isArray(p.categories_tags) && p.categories_tags.some((t) => /(^|:|-)(cheeses?|fromages?)(-|$)/.test(String(t)))) return true;
-  return toutesListes(p).some((l) => /\b(presures?|rennets?|coagulants?|coagulantes?)\b/.test(mots(l).join(" ")));
+  return toutesListes(p).some((l) => /\b(fromages?|cheeses?|presures?|rennets?|coagulants?|coagulantes?)\b/.test(mots(l).join(" ")));
 }
 
 module.exports = { BASES, photoSure, identifierProduit, recommander, meilleurProduit, interdit, estFromage };
