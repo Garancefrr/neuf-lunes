@@ -223,7 +223,11 @@ Au moindre doute, écarte-le. Une liste vide est une bonne réponse si aucun pro
     const p = liste[c.numero - 1];
     if (!p || pris.has(c.numero) || produits.length >= MAX_CHOIX) continue;
     pris.add(c.numero);
-    produits.push({ nom: nettoyer(nomComplet(p), 120), pourquoi: String(c.pourquoi || "").slice(0, 240), image: image(p), lien: `${base.url}/product/${p.code}`, base: base.nom, verifie: true });
+    // Précaution garantie par le code, même si la relecture l'oublie.
+    let pourquoi = String(c.pourquoi || "").slice(0, 240).trim();
+    const fromage = categorie === "aliment" && (FROMAGES_CUITS.test(mots(p.product_name).join(" ")) || /\b(fromages?|cheese)\b/.test(mots(p.product_name).join(" ")));
+    if (fromage && !mots(pourquoi).includes("croute")) pourquoi = `${pourquoi} À manger sans la croûte.`.trim();
+    produits.push({ nom: nettoyer(nomComplet(p), 120), pourquoi, image: image(p), lien: `${base.url}/product/${p.code}`, base: base.nom, verifie: true });
   }
   return produits;
 }
