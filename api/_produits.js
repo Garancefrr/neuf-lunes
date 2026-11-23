@@ -232,7 +232,7 @@ async function recommander({ client, modele, categorie, titre, idees, regles, si
   if (!liste.length) return [];
 
   const fiches = JSON.stringify(liste.map((p, i) => ({ numero: i + 1, produit: nettoyer(nomComplet(p), 120), listes_ingredients: toutesListes(p).map((l) => nettoyer(l, MAX_INGREDIENTS)) })));
-  const consigne = `Tu vérifies des produits réels à recommander à une femme enceinte qui ${situation}.
+  const consigne = `Tu vérifies des produits réels à recommander à une femme qui ${situation}.
 Produit à remplacer : « ${String(titre || "").slice(0, 120)} ».
 Idées de remplacement : ${idees.map((a) => a && a.nom).filter(Boolean).join(" ; ").slice(0, 400)}.
 

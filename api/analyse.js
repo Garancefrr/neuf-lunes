@@ -3,14 +3,14 @@
 // Variable à définir dans Vercel : ANTHROPIC_API_KEY.
 
 const AnthropicSDK = require("@anthropic-ai/sdk");
-const { construireConsigne, lireJSON, reglesPour } = require("./_consigne.js");
-const { lireSession } = require("./_session.js");
-const { BASES, photoSure, identifierProduit, recommander } = require("./_produits.js");
+const { construireConsigne, lireJSON } = require("./_consigne.js");
+const { TOXO, PERIODES, CONSENTEMENT, lireSession } = require("./_session.js");
+const { BASES, photoSure, identifierProduit } = require("./_produits.js");
 
 const Anthropic = AnthropicSDK.default || AnthropicSDK;
 const MODELE = "claude-sonnet-5-5";
 const MAX_PHOTOS = 4;
-const MODES = ["produit", "menu", "beaute", "texte"];
+const MODES = ["produit", "menu", "beaute", "texte", "scan"];
 
 // Format imposé à la réponse : évite les réponses mal formées.
 const VERDICT = { type: "string", enum: ["ok", "prudence", "eviter"] };
@@ -54,25 +54,43 @@ module.exports = async function handler(req, res) {
 
   let body = req.body || {};
   if (typeof body === "string") { try { body = JSON.parse(body || "{}"); } catch (e) { body = {}; } }
-  const { mode, toxo, precision, images } = body;
+  const { precision, images } = body;
+  let mode = body.mode;
 
   let session = null;
   try { session = lireSession(req); } catch (e) { console.error("session:", e.name); }
   if (!session) return res.status(401).json({ erreur: "Connecte-toi pour continuer." });
+  if (session.consent !== CONSENTEMENT) return res.status(403).json({ erreur: "Ton accord est nécessaire avant l'analyse.", consentement: true });
+
+  // Le profil enregistré fait foi. La valeur envoyée ne sert que juste après un changement de réglage.
+  const toxo = TOXO.includes(body.toxo) ? body.toxo : session.toxo;
+  const periode = PERIODES.includes(body.periode) ? body.periode : session.periode;
 
   if (!MODES.includes(mode)) return res.status(400).json({ erreur: "Type d'analyse inconnu." });
 
-  const photos = (Array.isArray(images) ? images : [])
+  const photos = (mode === "scan" || !Array.isArray(images) ? [] : images)
     .slice(0, MAX_PHOTOS)
     .filter((p) => typeof p === "string" && /^[A-Za-z0-9+/=]+$/.test(p));
   const texte = String(precision || "").slice(0, 1000);
-  if (mode !== "texte" && photos.length === 0) return res.status(400).json({ erreur: "Ajoute au moins une photo." });
+  if (mode !== "texte" && mode !== "scan" && photos.length === 0) return res.status(400).json({ erreur: "Ajoute au moins une photo." });
   if (mode === "texte" && texte.trim().length < 3) return res.status(400).json({ erreur: "Écris ta question." });
 
-  // Code-barres lu sur la photo : on cherche les ingrédients dans la base publique correspondante
+  // Code-barres lu sur la photo ou par la caméra : on cherche les ingrédients dans la base publique correspondante
   let infoBase = "", source = null;
   const codebarre = String(body.codebarre || "");
-  if (/^\d{8,14}$/.test(codebarre) && (mode === "beaute" || mode === "produit")) {
+  if (mode === "scan") {
+    if (!/^\d{8,14}$/.test(codebarre)) return res.status(400).json({ erreur: "Code-barres illisible. Réessaie." });
+    const [aliment, beaute] = await Promise.all([chercherProduit(BASES.aliment.url, codebarre), chercherProduit(BASES.beaute.url, codebarre)]);
+    const complet = (p) => p && (p.ingredients_text_fr || p.ingredients_text);
+    if (complet(aliment)) mode = "produit";
+    else if (complet(beaute)) mode = "beaute";
+    else return res.status(404).json({ erreur: "Ce produit n'a pas de liste d'ingrédients dans nos bases. Prends plutôt sa liste d'ingrédients en photo.", introuvable: true });
+    const base = mode === "beaute" ? BASES.beaute : BASES.aliment, p = mode === "beaute" ? beaute : aliment;
+    source = { base: base.nom, codebarre, lien: `${base.url}/product/${codebarre}`, image: photoSure(p.image_front_small_url || p.image_front_url), nom: [p.brands, p.product_name].filter(Boolean).join(" - ") || null };
+    infoBase = `Il n'y a pas de photo : analyse uniquement la fiche suivante, trouvée dans la base collaborative ${base.nom} pour le code-barres ${codebarre}. Elle peut être incomplète ou ancienne : ajoute toujours dans "a_verifier" de comparer avec la liste imprimée sur l'emballage.
+Nom : ${p.product_name || "inconnu"} ; marque : ${p.brands || "inconnue"}
+Ingrédients : ${(p.ingredients_text_fr || p.ingredients_text).slice(0, 4000)}`;
+  } else if (/^\d{8,14}$/.test(codebarre) && (mode === "beaute" || mode === "produit")) {
     const base = mode === "beaute" ? BASES.beaute : BASES.aliment;
     const p = await chercherProduit(base.url, codebarre);
     if (p && (p.ingredients_text_fr || p.ingredients_text)) {
@@ -86,7 +104,7 @@ Ingrédients : ${(p.ingredients_text_fr || p.ingredients_text).slice(0, 4000)}`;
   }
 
   const contenu = photos.map((data) => ({ type: "image", source: { type: "base64", media_type: "image/jpeg", data } }));
-  contenu.push({ type: "text", text: construireConsigne(mode, toxo, texte, infoBase) });
+  contenu.push({ type: "text", text: construireConsigne(mode, toxo, texte, infoBase, periode) });
 
   try {
     const client = new Anthropic({ apiKey: cle, timeout: 55000, maxRetries: 1 });
@@ -112,18 +130,18 @@ Ingrédients : ${(p.ingredients_text_fr || p.ingredients_text).slice(0, 4000)}`;
     if (source) resultat.source = source;
     delete resultat.produit_identifie;
 
-    // Produits réels du même type, gardés seulement après vérification de leurs ingrédients.
+    // Le verdict part tout de suite. L'application demande ensuite les produits à /api/recommandations.
     const idees = Array.isArray(resultat.alternatives) ? resultat.alternatives : [];
-    if (resultat.lisible !== false && mode !== "menu" && resultat.verdict !== "ok" && idees.length) {
-      try {
-        const situation = { immunisee: "est immunisée contre la toxoplasmose", non: "n'est pas immunisée contre la toxoplasmose" }[toxo] || "ne sait pas si elle est immunisée contre la toxoplasmose";
-        const produits = await recommander({ client, modele: MODELE, categorie, titre: resultat.titre, idees, regles: reglesPour(categorie), situation, exclu: source });
-        if (produits.length) resultat.alternatives = produits;
-      } catch (e) {
-        console.error("recommandations:", e && e.name, e && e.status);
-      }
+    if (resultat.lisible !== false && mode !== "menu" && resultat.verdict !== "ok" && idees.some((a) => a && a.recherche)) {
+      resultat.a_completer = {
+        categorie,
+        titre: resultat.titre,
+        idees: idees.slice(0, 3).map((a) => ({ nom: a.nom, recherche: a.recherche })),
+        exclu: source ? { code: source.code || null, codebarre: source.codebarre || null, nom: source.nom || null } : null,
+      };
     }
-    if (Array.isArray(resultat.alternatives)) resultat.alternatives.forEach((a) => { if (a) delete a.recherche; });
+    idees.forEach((a) => { if (a) delete a.recherche; });
+    resultat.mode_analyse = mode;
     return res.status(200).json(resultat);
   } catch (e) {
     // Ne jamais journaliser les photos ni la question : seulement le type d'erreur.

@@ -1,5 +1,7 @@
-// GET : suis-je connectée ? (et renouvelle la session). POST : retient la toxoplasmose. DELETE : déconnexion.
-const { TOXO, lireSession, poserSession, effacerSession } = require("./_session.js");
+// GET : suis-je connectée ? (et renouvelle la session). POST : retient le profil et l'accord. DELETE : déconnexion et effacement.
+const { TOXO, PERIODES, CONSENTEMENT, lireSession, poserSession, effacerSession } = require("./_session.js");
+
+const profil = (s) => ({ connecte: true, compte: s.id, toxo: s.toxo || null, periode: s.periode || null, consent: s.consent === CONSENTEMENT });
 
 module.exports = function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
@@ -11,13 +13,25 @@ module.exports = function handler(req, res) {
 
     if (req.method === "GET") {
       poserSession(res, session);
-      return res.status(200).json({ connecte: true, compte: session.id, toxo: session.toxo || null });
+      return res.status(200).json(profil(session));
     }
     if (req.method === "POST") {
-      const toxo = req.body && req.body.toxo;
-      if (!TOXO.includes(toxo)) return res.status(400).json({ erreur: "Réponse inconnue." });
-      poserSession(res, { id: session.id, toxo });
-      return res.status(200).json({ connecte: true, toxo });
+      const b = req.body || {};
+      const suivante = { id: session.id, toxo: session.toxo, periode: session.periode, consent: session.consent };
+      if (b.toxo !== undefined) {
+        if (!TOXO.includes(b.toxo)) return res.status(400).json({ erreur: "Réponse inconnue." });
+        suivante.toxo = b.toxo;
+      }
+      if (b.periode !== undefined) {
+        if (!PERIODES.includes(b.periode)) return res.status(400).json({ erreur: "Réponse inconnue." });
+        suivante.periode = b.periode;
+      }
+      if (b.consentement !== undefined) {
+        if (b.consentement !== true) return res.status(400).json({ erreur: "Réponse inconnue." });
+        suivante.consent = CONSENTEMENT;
+      }
+      poserSession(res, suivante);
+      return res.status(200).json(profil(suivante));
     }
     return res.status(405).json({ erreur: "Méthode non autorisée." });
   } catch (e) {

@@ -169,6 +169,13 @@ ul.simple{margin:0;padding:0 0 0 20px;display:flex;flex-direction:column;gap:6px
 .histo .dt{font-size:14px;color:var(--muted)}
 
 .erreur{background:var(--bad-bg);color:var(--bad);border-radius:18px;padding:14px 16px;font-size:16px}
+.tuile.t0 .ico .blob{color:var(--cobalt)}
+.scan-cadre{position:relative;border-radius:26px;overflow:hidden;background:#000;aspect-ratio:3/4;max-height:60vh;width:100%}
+.scan-cadre video{width:100%;height:100%;object-fit:cover;display:block}
+.scan-viseur{position:absolute;left:9%;right:9%;top:36%;bottom:36%;border:3px solid #fff;border-radius:16px;box-shadow:0 0 0 999px rgba(0,0,0,.35)}
+.accord{display:grid;grid-template-columns:26px 1fr;gap:10px;align-items:start;font-size:16px;cursor:pointer}
+.accord input{width:24px;height:24px;margin:1px 0 0;accent-color:var(--accent)}
+.charge{color:var(--muted);font-size:16px;text-align:center;padding:8px}
 .note{font-size:14px;color:var(--muted);text-align:center}
 .note a,.carte a{color:var(--accent)}
 details summary{cursor:pointer;font-weight:600}
@@ -216,13 +223,31 @@ details ul{margin-top:10px}
     <p class="note">On utilise seulement un identifiant de compte, ni ton nom ni ton e-mail.</p>
   </div>
 
+  <div class="carte accueil-q hidden" id="c-consentement">
+    <h2 style="font-size:21px">Ton accord, avant de commencer</h2>
+    <p class="muted small">Pour te répondre, Neuf Lunes envoie tes photos, tes questions et ta situation (trimestre ou allaitement, toxoplasmose) à Claude, le service d'intelligence artificielle d'Anthropic, aux États-Unis. Ce sont des données de santé. L'appli ne les conserve pas.</p>
+    <label class="accord"><input type="checkbox" id="ch-consent"><span>J'accepte que ces informations soient utilisées pour analyser mes produits.</span></label>
+    <a href="/confidentialite" class="small">Lire le détail sur mes données</a>
+    <button type="button" class="btn plein" id="b-consent" disabled>Continuer</button>
+    <div class="erreur hidden" id="err-consent" role="alert">L'enregistrement a échoué. Vérifie ta connexion et réessaie.</div>
+  </div>
+
   <div class="carte accueil-q" id="c-bienvenue">
-    <h2 style="font-size:21px">Une seule question avant de commencer</h2>
+    <h2 style="font-size:21px">Deux questions pour adapter les réponses</h2>
+    <p class="muted small">Où en es-tu ?</p>
+    <div class="puces" role="group" aria-label="Période">
+      <button type="button" class="puce" data-periode="t1" aria-pressed="false">1er trimestre</button>
+      <button type="button" class="puce" data-periode="t2" aria-pressed="false">2e trimestre</button>
+      <button type="button" class="puce" data-periode="t3" aria-pressed="false">3e trimestre</button>
+      <button type="button" class="puce" data-periode="allaitement" aria-pressed="false">J'allaite</button>
+    </div>
+    <div id="q-toxo" style="display:flex;flex-direction:column;gap:12px">
     <p class="muted small">Es-tu immunisée contre la toxoplasmose ? C'est écrit sur ta prise de sang du début de grossesse.</p>
     <div class="puces" role="group" aria-label="Toxoplasmose">
       <button type="button" class="puce" data-toxo="immunisee" aria-pressed="false">Oui</button>
       <button type="button" class="puce" data-toxo="non" aria-pressed="false">Non</button>
       <button type="button" class="puce" data-toxo="inconnu" aria-pressed="false">Je ne sais pas</button>
+    </div>
     </div>
     <div class="code-bloc" style="display:flex;flex-direction:column;gap:8px">
       <label for="code" class="small" style="font-weight:700">Code d'accès</label>
@@ -233,6 +258,11 @@ details ul{margin-top:10px}
 
   <h2 style="font-size:28px">Que veux-tu vérifier ?</h2>
   <div class="tuiles" id="tuiles">
+    <button type="button" class="tuile t0" id="b-scan">
+      <span class="ico"><svg class="blob" viewBox="0 0 100 100" aria-hidden="true"><path d="M48 4c20-2 42 12 46 32s-8 42-28 52-44 6-56-10S0 38 12 22 28 6 48 4z" fill="currentColor" opacity=".4"/></svg><svg class="trait" width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M7 8v8M10 8v8M13 8v8M17 8v8"/></svg></span>
+      <span><strong>Scanner un produit</strong><span class="d">Vise le code-barres avec la caméra</span></span>
+      <span class="fleche" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span>
+    </button>
     <button type="button" class="tuile t1" data-mode="produit">
       <span class="ico"><svg class="blob" viewBox="0 0 100 100" aria-hidden="true"><path d="M52 6c18 0 36 10 41 28s-3 38-18 50-38 14-55 4S-3 58 4 38 34 6 52 6z" fill="currentColor" opacity=".55"/></svg><svg class="trait" width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9h18l-2 11H5L3 9z"/><path d="M8 9l4-6 4 6"/><path d="M9 13v4M15 13v4"/></svg></span>
       <span><strong>Un aliment</strong><span class="d">Photo des ingrédients<span class="si-api"> ou du code-barres</span></span></span>
@@ -275,6 +305,19 @@ details ul{margin-top:10px}
   <input type="file" id="f-photo" accept="image/*" multiple class="hidden">
 </section>
 
+<!-- ============ SCAN ============ -->
+<section class="ecran hidden" id="e-scan">
+  <button type="button" class="retour" data-retour>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Retour
+  </button>
+  <h1 class="titre-ecran">Vise le code-barres</h1>
+  <div class="scan-cadre"><video id="scan-video" playsinline muted autoplay></video><div class="scan-viseur" aria-hidden="true"></div></div>
+  <p class="muted small" id="scan-aide">Place les barres dans le cadre et ne bouge plus. La lecture est automatique.</p>
+  <div class="erreur hidden" id="err-scan" role="alert"></div>
+  <button type="button" class="btn plein hidden" id="b-scan-relancer">Réessayer</button>
+  <button type="button" class="btn doux" id="b-scan-photo">Prendre une photo à la place</button>
+</section>
+
 <!-- ============ PHOTOS ============ -->
 <section class="ecran hidden" id="e-photos">
   <button type="button" class="retour" data-retour>
@@ -313,7 +356,7 @@ details ul{margin-top:10px}
       <g fill="none" stroke="var(--ink)" stroke-width="2.2" stroke-linecap="round" transform="translate(40 30) scale(.8)"><path d="M10 90C20 60 30 40 50 10"/><path d="M22 66c-10-2-16-8-18-16 9 0 16 5 18 16z"/><path d="M28 54c8-6 16-6 22-2-6 6-14 7-22 2z"/><path d="M34 42c-9-3-13-10-13-17 8 2 13 8 13 17z"/><path d="M40 30c7-6 15-7 21-4-5 6-13 8-21 4z"/></g>
     </svg>
     <h2 style="font-size:26px" id="attente-txt">Je lis l'étiquette…</h2>
-    <p class="muted small">Environ 15 secondes</p>
+    <p class="muted small">Environ 10 secondes</p>
   </div>
 </section>
 
@@ -333,6 +376,15 @@ details ul{margin-top:10px}
   </button>
   <h1 class="titre-ecran">Réglages</h1>
   <div class="carte">
+    <h2 style="font-size:19px">Où en es-tu ?</h2>
+    <div class="puces" role="group" aria-label="Période">
+      <button type="button" class="puce" data-periode="t1" aria-pressed="false">1er trimestre</button>
+      <button type="button" class="puce" data-periode="t2" aria-pressed="false">2e trimestre</button>
+      <button type="button" class="puce" data-periode="t3" aria-pressed="false">3e trimestre</button>
+      <button type="button" class="puce" data-periode="allaitement" aria-pressed="false">J'allaite</button>
+    </div>
+  </div>
+  <div class="carte" id="r-toxo">
     <h2 style="font-size:19px">Immunisée contre la toxoplasmose ?</h2>
     <div class="puces" role="group" aria-label="Toxoplasmose">
       <button type="button" class="puce" data-toxo="immunisee" aria-pressed="false">Oui</button>
@@ -357,7 +409,8 @@ details ul{margin-top:10px}
     <p class="small muted">Cette appli aide à repérer les risques. Elle ne remplace pas l'avis de ta sage-femme, de ton médecin ou de ton pharmacien. Sources : <a href="https://www.sante.fr/node/7070507" target="_blank" rel="noopener">Santé publique France</a> et <a href="https://ansm.sante.fr/documents/reference/recommandations-pour-les-produits-cosmetiques" target="_blank" rel="noopener">ANSM</a>.</p>
   </div>
   <button type="button" class="btn doux" id="b-effacer">Effacer l'historique</button>
-  <button type="button" class="btn doux" id="b-deconnexion">Se déconnecter</button>
+  <button type="button" class="btn doux" id="b-deconnexion">Se déconnecter et effacer mes données</button>
+  <p class="note"><a href="/confidentialite">Confidentialité et données</a></p>
 </section>
 
 </main>
@@ -380,6 +433,7 @@ details ul{margin-top:10px}
   function aller(id, remplacer){
     document.querySelectorAll(".ecran[id^='e-']").forEach(function(s){ s.classList.add("hidden"); });
     $(id).classList.remove("hidden");
+    if (id !== "e-scan") arreterScan();
     if (remplacer) pile[pile.length - 1] = id; else if (pile[pile.length - 1] !== id) pile.push(id);
     window.scrollTo(0, 0);
   }
@@ -406,6 +460,11 @@ details ul{margin-top:10px}
   function toxo(){ return store.get("toxo", null); }
   function majPuces(){
     document.querySelectorAll("[data-toxo]").forEach(function(b){ b.setAttribute("aria-pressed", String(b.dataset.toxo === (choixToxo || toxo()))); });
+    var p = choixPeriode || periode();
+    document.querySelectorAll("[data-periode]").forEach(function(b){ b.setAttribute("aria-pressed", String(b.dataset.periode === p)); });
+    // La toxoplasmose ne concerne pas l'allaitement : la question disparaît.
+    $("q-toxo").classList.toggle("hidden", p === "allaitement");
+    $("r-toxo").classList.toggle("hidden", p === "allaitement");
   }
   var choixToxo = null;
   document.querySelectorAll("#c-bienvenue [data-toxo]").forEach(function(b){
@@ -414,11 +473,34 @@ details ul{margin-top:10px}
   document.querySelectorAll("#e-reglages [data-toxo]").forEach(function(b){
     b.onclick = function(){ retenirToxo(b.dataset.toxo); choixToxo = null; majPuces(); };
   });
-  function retenirToxo(v){
-    store.set("toxo", v);
-    fetch("/api/moi", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ toxo: v }) }).catch(function(){});
+  var choixPeriode = null;
+  function periode(){ return store.get("periode", null); }
+  document.querySelectorAll("#c-bienvenue [data-periode]").forEach(function(b){
+    b.onclick = function(){ choixPeriode = b.dataset.periode; majPuces(); majCommencer(); };
+  });
+  document.querySelectorAll("#e-reglages [data-periode]").forEach(function(b){
+    b.onclick = function(){
+      retenirPeriode(b.dataset.periode); choixPeriode = null;
+      if (b.dataset.periode === "allaitement" && !toxo()) retenirToxo("inconnu");
+      majPuces(); majAccueil();
+    };
+  });
+  function envoyerProfil(o){
+    return fetch("/api/moi", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(o) });
   }
+  function retenirToxo(v){ store.set("toxo", v); envoyerProfil({ toxo: v }).catch(function(){}); }
+  function retenirPeriode(v){ store.set("periode", v); envoyerProfil({ periode: v }).catch(function(){}); }
   function connecte(){ return store.get("connecte", false) === true; }
+  function consenti(){ return store.get("consent", false) === true; }
+  $("ch-consent").onchange = function(){ $("b-consent").disabled = !$("ch-consent").checked; };
+  $("b-consent").onclick = async function(){
+    $("err-consent").classList.add("hidden");
+    try {
+      var r = await envoyerProfil({ consentement: true });
+      if (!r.ok) throw new Error("refus");
+      store.set("consent", true); majAccueil();
+    } catch(e) { $("err-consent").classList.remove("hidden"); }
+  };
   // L'appli s'ouvre tout de suite si la personne est déjà connectée, puis vérifie en arrière-plan.
   async function verifierSession(){
     try {
@@ -431,11 +513,15 @@ details ul{margin-top:10px}
         var avant = store.get("compte", null);
         if (avant !== d.compte){
           store.set("toxo", null);
+          store.set("periode", null);
           store.set("historique", []);
           store.set("compte", d.compte);
         }
+        store.set("consent", d.consent === true);
         if (d.toxo && d.toxo !== toxo()) store.set("toxo", d.toxo);
         else if (!d.toxo && toxo()) retenirToxo(toxo());
+        if (d.periode && d.periode !== periode()) store.set("periode", d.periode);
+        else if (!d.periode && periode()) retenirPeriode(periode());
       }
       majAccueil(); dessinerHisto();
     } catch(e) {} // hors connexion : on garde le dernier état connu
@@ -446,22 +532,31 @@ details ul{margin-top:10px}
       var r = await fetch("/api/moi", { method: "DELETE" });
       if (!r.ok) throw new Error("refus");
     } catch(e) { b.textContent = "Pas de réseau, réessaie"; return; }
-    b.textContent = "Se déconnecter";
-    store.set("connecte", false); store.set("compte", null); store.set("toxo", null); store.set("historique", []);
+    b.textContent = "Se déconnecter et effacer mes données";
+    store.set("connecte", false); store.set("compte", null); store.set("toxo", null); store.set("periode", null); store.set("consent", false); store.set("historique", []);
+    $("ch-consent").checked = false; $("b-consent").disabled = true;
     pile = ["e-accueil"]; aller("e-accueil", true); majAccueil(); dessinerHisto();
   };
   $("code").addEventListener("input", majCommencer);
   $("code2").addEventListener("change", function(){ store.set("code", $("code2").value.trim()); });
-  function majCommencer(){ $("b-commencer").disabled = !choixToxo; }
+  function majCommencer(){
+    var p = choixPeriode || periode();
+    $("b-commencer").disabled = !(p && (p === "allaitement" || choixToxo || toxo()));
+  }
   $("b-commencer").onclick = function(){
-    retenirToxo(choixToxo);
-    choixToxo = null; majAccueil();
+    var p = choixPeriode || periode();
+    retenirPeriode(p);
+    retenirToxo(p === "allaitement" ? (toxo() || "inconnu") : (choixToxo || toxo()));
+    choixToxo = null; choixPeriode = null; majAccueil();
   };
-  function pret(){ return connecte() && !!toxo(); }
+  function profilComplet(){ return !!periode() && !!toxo(); }
+  function pret(){ return connecte() && consenti() && profilComplet(); }
   function majAccueil(){
     var ok = pret();
     $("c-connexion").classList.toggle("hidden", connecte());
-    $("c-bienvenue").classList.toggle("hidden", !connecte() || !!toxo());
+    $("c-consentement").classList.toggle("hidden", !connecte() || consenti());
+    $("c-bienvenue").classList.toggle("hidden", !connecte() || !consenti() || profilComplet());
+    majCommencer();
     $("tuiles").style.opacity = ok ? "1" : ".45";
     $("tuiles").style.pointerEvents = ok ? "auto" : "none";
     $("code2").value = store.get("code", "");
@@ -474,7 +569,7 @@ details ul{margin-top:10px}
     menu: { titre: "La carte", aide: "Ajoute toutes les pages de la carte, jusqu'à 4 photos." },
     beaute: { titre: "Ton produit", aide: avecCode ? "Une photo nette du code-barres ou de la liste des ingrédients suffit." : "Cadre bien la liste des ingrédients (souvent au dos, après « Ingredients »)." }
   };
-  document.querySelectorAll(".tuile").forEach(function(t){
+  document.querySelectorAll(".tuile[data-mode]").forEach(function(t){
     t.onclick = function(){ mode = t.dataset.mode; photos = []; $("precision").value = ""; $("f-photo").click(); };
   });
   $("f-photo").onchange = async function(e){
@@ -533,7 +628,8 @@ details ul{margin-top:10px}
     produit: ["Je lis l'étiquette…", "Je compare aux recommandations…", "Je prépare des alternatives…"],
     menu: ["Je lis la carte…", "Je regarde chaque plat…", "Je prépare tes questions…"],
     beaute: ["Je lis les ingrédients…", "Je repère les ingrédients sensibles…", "Je cherche des alternatives…"],
-    texte: ["Je réfléchis…", "Je compare aux recommandations…", "Je prépare la réponse…"]
+    texte: ["Je réfléchis…", "Je compare aux recommandations…", "Je prépare la réponse…"],
+    scan: ["Je cherche le produit…", "Je lis ses ingrédients…", "Je prépare la réponse…"]
   };
   var minuteur = null;
   function attente(m){
@@ -577,16 +673,81 @@ details ul{margin-top:10px}
     return null;
   }
 
-  async function demander(m, precision){
-    var blobs = m === "texte" ? [] : photos.map(function(p){ return p.blob; });
+  // ---------- Scan en direct ----------
+  var fluxScan = null, minuteurScan = null, lecteurScan = null, dernierCode = null, vuCode = 0, scanActif = false;
+  function arreterScan(){
+    scanActif = false;
+    clearInterval(minuteurScan); minuteurScan = null;
+    if (lecteurScan){ try { lecteurScan.reset(); } catch(e) {} lecteurScan = null; }
+    if (fluxScan){ fluxScan.getTracks().forEach(function(t){ t.stop(); }); fluxScan = null; }
+    var v = $("scan-video"); if (v) v.srcObject = null;
+  }
+  function erreurScan(t){
+    $("err-scan").textContent = t; $("err-scan").classList.remove("hidden");
+    $("b-scan-relancer").classList.remove("hidden");
+  }
+  // Le même numéro doit être lu deux fois de suite : évite les fausses lectures.
+  function codeLu(code){
+    if (!scanActif || !/^\d{8,14}$/.test(String(code))) return;
+    if (code === dernierCode) vuCode++; else { dernierCode = code; vuCode = 1; }
+    if (vuCode < 2) return;
+    arreterScan();
+    if (navigator.vibrate) navigator.vibrate(60);
+    lancer("scan", "", "err-scan", String(code));
+  }
+  async function demarrerScan(){
+    arreterScan();
+    dernierCode = null; vuCode = 0;
+    $("err-scan").classList.add("hidden"); $("b-scan-relancer").classList.add("hidden");
+    if (pile[pile.length - 1] !== "e-scan") aller("e-scan");
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return erreurScan("Ton téléphone ne permet pas le scan ici. Prends plutôt une photo.");
+    var video = $("scan-video");
+    try {
+      scanActif = true;
+      var formats = ["ean_13", "ean_8", "upc_a", "upc_e"], natif = false;
+      if ("BarcodeDetector" in window){
+        try { var dispo = await window.BarcodeDetector.getSupportedFormats(); natif = formats.some(function(f){ return dispo.indexOf(f) >= 0; }); } catch(e) {}
+      }
+      fluxScan = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 } }, audio: false });
+      if (!scanActif){ arreterScan(); return; }
+      if (natif){
+        video.srcObject = fluxScan;
+        await video.play();
+        var det = new window.BarcodeDetector({ formats: formats }), occupe = false;
+        minuteurScan = setInterval(async function(){
+          if (occupe || !scanActif || video.readyState < 2) return;
+          occupe = true;
+          try { var l = await det.detect(video); if (l.length) codeLu(l[0].rawValue); } catch(e) {}
+          occupe = false;
+        }, 200);
+      } else {
+        var Z = await chargerZxing();
+        if (!scanActif){ arreterScan(); return; }
+        lecteurScan = new Z.BrowserMultiFormatReader();
+        await lecteurScan.decodeFromStream(fluxScan, video, function(res){ if (res) codeLu(res.getText()); });
+      }
+    } catch(e) {
+      arreterScan();
+      erreurScan(e && (e.name === "NotAllowedError" || e.name === "SecurityError")
+        ? "L'appli n'a pas accès à la caméra. Autorise la caméra dans les réglages de ton téléphone, puis réessaie."
+        : "La caméra n'a pas pu démarrer. Réessaie, ou prends plutôt une photo.");
+    }
+  }
+  $("b-scan").onclick = demarrerScan;
+  $("b-scan-relancer").onclick = demarrerScan;
+  $("b-scan-photo").onclick = function(){ arreterScan(); mode = "produit"; photos = []; $("precision").value = ""; pile = ["e-accueil"]; aller("e-accueil", true); $("f-photo").click(); };
+
+  async function demander(m, precision, codeScan){
+    var blobs = (m === "texte" || m === "scan") ? [] : photos.map(function(p){ return p.blob; });
     if (BACKEND === "api"){
-      var codebarre = (m === "beaute" || m === "produit") ? await lireCodeBarre(blobs) : null;
+      var codebarre = m === "scan" ? codeScan : (m === "beaute" || m === "produit") ? await lireCodeBarre(blobs) : null;
       var images = await Promise.all(blobs.map(enBase64));
       var r = await fetch("/api/analyse", {
         method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ code: store.get("code", ""), mode: m, toxo: toxo(), precision: precision, images: images, codebarre: codebarre })
+        body: JSON.stringify({ mode: m, toxo: toxo(), periode: periode(), precision: precision, images: images, codebarre: codebarre })
       });
       var data = null; try { data = await r.json(); } catch(e) {}
+      if (r.status === 403 && data && data.consentement){ store.set("consent", false); majAccueil(); throw new Error("Ton accord est nécessaire. Reviens à l'accueil pour le donner."); }
       if (r.status === 413) throw new Error("Les photos sont trop lourdes. Envoie-en moins à la fois.");
       if (r.status === 401){ store.set("connecte", false); majAccueil(); dessinerHisto(); throw new Error("Ta connexion a expiré. Reviens à l'accueil pour te reconnecter."); }
       if (!r.ok) throw new Error((data && data.erreur) || "Une erreur est survenue. Réessaie.");
@@ -609,23 +770,29 @@ details ul{margin-top:10px}
       throw e;
     }
   }
-  async function lancer(m, precision, errId){
+  async function lancer(m, precision, errId, codeScan){
     if (enCours) return;
     enCours = true;
     $(errId).classList.add("hidden");
     attente(m);
     try{
-      var d = await demander(m, precision);
-      d.mode = m; d.date = new Date().toISOString();
+      var d = await demander(m, precision, codeScan);
+      d.mode = d.mode_analyse || m; delete d.mode_analyse;
+      d.date = new Date().toISOString();
+      var aCompleter = d.a_completer; delete d.a_completer;
+      if (m === "scan") photos = [];
+      if (d.lisible !== false) sauver(d);
+      d._charge = !!aCompleter;
       resultatEnCours = d;
       afficher(d);
-      if (d.lisible !== false) sauver(d);
       aller("e-resultat", true);
+      if (aCompleter) completerProduits(d, aCompleter);
     } catch(e){
       retour();
       var el = $(errId);
       el.textContent = (e && e.message && e.message !== "Failed to fetch") ? e.message : "Pas de connexion. Vérifie ton réseau et réessaie.";
       el.classList.remove("hidden");
+      if (m === "scan") $("b-scan-relancer").classList.remove("hidden");
     } finally {
       clearInterval(minuteur); enCours = false;
     }
@@ -661,6 +828,50 @@ details ul{margin-top:10px}
   function liste(titre, arr){
     return (arr && arr.length) ? '<div class="bloc"><h2>' + titre + '</h2><div class="carte"><ul class="simple">' + arr.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join("") + '</ul></div></div>' : "";
   }
+  function blocAlternatives(d){
+    var alts = d.alternatives || [], html = "";
+    if (!alts.length && !d._charge) return "";
+    html += '<div class="bloc"><h2>' + (norm(d.verdict) === "ok" ? "Autres idées" : "À la place, essaie") + '</h2>' + alts.map(carteAlt).join("") + '</div>';
+    if (d._charge) html += '<p class="charge" role="status">Je cherche des produits adaptés…</p>';
+    if (alts.some(function(a){ return a.image; })) html += '<p class="credit">Photos : bases collaboratives Open Food Facts et Open Beauty Facts. Vérifie toujours la liste des ingrédients sur l\'emballage, les formules changent.</p>';
+    return html;
+  }
+  // Deuxième temps : le verdict est déjà affiché, les produits arrivent ensuite.
+  async function completerProduits(d, demande){
+    try {
+      var r = await fetch("/api/recommandations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(demande) });
+      var data = r.ok ? await r.json() : null;
+      if (data && data.produits && data.produits.length){
+        d.alternatives = data.produits;
+        var h = store.get("historique", []);
+        h.forEach(function(x){ if (x.date === d.date) x.alternatives = data.produits; });
+        store.set("historique", h);
+      }
+    } catch(e) {}
+    d._charge = false;
+    if (resultatEnCours === d && $("bloc-alt")) $("bloc-alt").innerHTML = blocAlternatives(d);
+  }
+  function blocSignalement(){
+    return '<div class="bloc"><button type="button" class="btn doux" id="b-signaler">Ce résultat me semble faux</button>' +
+      '<div class="carte hidden" id="f-signal"><label for="txt-signal" style="font-weight:600">Qu\'est-ce qui te semble faux ?</label>' +
+      '<textarea class="champ" id="txt-signal" maxlength="500" style="min-height:90px" placeholder="Ex : ce fromage est pasteurisé, c\'est écrit sur l\'emballage"></textarea>' +
+      '<p class="small muted">Ne note pas ton nom. Ton message, le nom du produit, le verdict et ta période sont gardés 90 jours pour corriger l\'appli, sans photo ni compte.</p>' +
+      '<button type="button" class="btn plein" id="b-envoyer-signal">Envoyer</button><p class="small hidden" id="msg-signal" role="status"></p></div></div>';
+  }
+  function brancherSignalement(d){
+    $("b-signaler").onclick = function(){ $("f-signal").classList.remove("hidden"); $("b-signaler").classList.add("hidden"); $("txt-signal").focus(); };
+    $("b-envoyer-signal").onclick = async function(){
+      var b = $("b-envoyer-signal"), msg = $("msg-signal"), t = $("txt-signal").value.trim();
+      msg.classList.remove("hidden");
+      if (t.length < 3){ msg.textContent = "Explique en quelques mots ce qui te semble faux."; return; }
+      b.disabled = true;
+      try {
+        var r = await fetch("/api/signalement", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ titre: (d.source && d.source.nom) || d.titre, mode: d.mode, verdict: d.verdict, commentaire: t }) });
+        if (!r.ok) throw new Error("refus");
+        $("f-signal").innerHTML = '<p style="font-weight:600">Merci, c\'est bien reçu.</p><p class="small muted">En attendant, demande conseil à ta sage-femme ou à ton pharmacien.</p>';
+      } catch(e) { b.disabled = false; msg.textContent = "L'envoi a échoué. Vérifie ta connexion et réessaie."; }
+    };
+  }
   function afficher(d){
     var r = $("resultat");
     if (d.lisible === false){
@@ -683,10 +894,7 @@ details ul{margin-top:10px}
         (photoProduit ? '<div class="produit"><img src="' + esc(photoProduit) + '" alt="Photo du produit"><span class="rond">' + ICONES[v] + '</span></div>' : '<span class="rond">' + ICONES[v] + '</span>') +
         ((d.source && d.source.nom) || d.titre ? '<span class="quoi">' + esc((d.source && d.source.nom) || d.titre) + '</span>' : '') +
         '<span class="mot">' + mots(v, d) + '</span><p>' + esc(d.resume) + '</p></div>';
-      if (d.alternatives && d.alternatives.length){
-        html += '<div class="bloc"><h2>' + (v === "ok" ? "Autres idées" : "À la place, essaie") + '</h2>' + d.alternatives.map(carteAlt).join("") + '</div>';
-        if (d.alternatives.some(function(a){ return a.image; })) html += '<p class="credit">Photos : bases collaboratives Open Food Facts et Open Beauty Facts. Vérifie toujours la liste des ingrédients sur l\'emballage, les formules changent.</p>';
-      }
+      html += '<div id="bloc-alt" class="ecran">' + blocAlternatives(d) + '</div>';
       if (el.length) html += '<div class="bloc"><h2>Le détail</h2>' + el.map(ligne).join("") + '</div>';
       html += liste("Questions à poser", d.questions);
     }
@@ -703,8 +911,10 @@ details ul{margin-top:10px}
     // Liste d'ingrédients seule : le produit ne peut pas être reconnu, on propose d'ajouter une photo.
     var proposerPhoto = d === resultatEnCours && !d.source && (d.mode === "produit" || d.mode === "beaute") && photos.length > 0 && photos.length < 4;
     if (proposerPhoto) html += '<div class="carte accueil-q"><h2 style="font-size:21px">Tu veux voir ton produit ?</h2><p class="muted small">Une liste d\'ingrédients ne dit pas de quel produit il s\'agit. Ajoute une photo du devant, avec la marque et le nom, ou du code-barres.</p><button type="button" class="btn doux" id="b-photo-produit">Ajouter une photo du produit</button></div>';
+    html += blocSignalement();
     html += '<p class="note">En cas de doute, demande à ta sage-femme ou à ton pharmacien.</p>';
     r.innerHTML = html;
+    brancherSignalement(d);
     if (proposerPhoto) $("b-photo-produit").onclick = function(){ pile = ["e-accueil", "e-photos"]; aller("e-photos", true); $("f-photo").click(); };
   }
 

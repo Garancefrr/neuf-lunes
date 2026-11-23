@@ -1,5 +1,5 @@
 // Session de connexion : un cookie signé, gardé sur le téléphone. Aucune base de données.
-// Il contient seulement un identifiant anonymisé et la réponse sur la toxoplasmose.
+// Il contient un identifiant anonymisé, le profil (toxoplasmose, période) et l'accord donné.
 // Variable à définir dans Vercel : SESSION_SECRET.
 
 const crypto = require("crypto");
@@ -9,6 +9,8 @@ const OAUTH = "nl_oauth";
 const DUREE_SESSION = 400 * 24 * 3600; // maximum accepté par les navigateurs, renouvelé à chaque ouverture
 const DUREE_OAUTH = 10 * 60;
 const TOXO = ["immunisee", "non", "inconnu"];
+const PERIODES = ["t1", "t2", "t3", "allaitement"];
+const CONSENTEMENT = "2026-11"; // à changer si les traitements de données évoluent : l'accord sera redemandé
 
 function secret() {
   const s = process.env.SESSION_SECRET || "";
@@ -62,10 +64,10 @@ function lireOAuth(req) {
   const d = ouvrir("oauth", lireCookie(req, OAUTH));
   return d && texte(d.state) && texte(d.nonce) && texte(d.verifier) ? d : null;
 }
-const poserSession = (res, { id, toxo }) => ajouterCookie(res, SESSION, sceller("session", { id, toxo: TOXO.includes(toxo) ? toxo : null }, DUREE_SESSION), DUREE_SESSION);
+const poserSession = (res, { id, toxo, periode, consent }) => ajouterCookie(res, SESSION, sceller("session", { id, toxo: TOXO.includes(toxo) ? toxo : null, periode: PERIODES.includes(periode) ? periode : null, consent: consent === CONSENTEMENT ? consent : null }, DUREE_SESSION), DUREE_SESSION);
 const effacerSession = (res) => ajouterCookie(res, SESSION, "", 0);
 const poserOAuth = (res, d) => ajouterCookie(res, OAUTH, sceller("oauth", d, DUREE_OAUTH), DUREE_OAUTH);
 const effacerOAuth = (res) => ajouterCookie(res, OAUTH, "", 0);
 const adresseRetour = () => `${process.env.APP_URL || "https://neuf-lunes-pi.vercel.app"}/api/auth/callback`;
 
-module.exports = { TOXO, secret, lireSession, poserSession, effacerSession, lireOAuth, poserOAuth, effacerOAuth, adresseRetour };
+module.exports = { TOXO, PERIODES, CONSENTEMENT, secret, lireSession, poserSession, effacerSession, lireOAuth, poserOAuth, effacerOAuth, adresseRetour };
