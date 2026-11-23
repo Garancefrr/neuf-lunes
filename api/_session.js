@@ -16,20 +16,21 @@ function secret() {
   return s;
 }
 
-function signature(charge) {
-  return crypto.createHmac("sha256", secret()).update(charge).digest("base64url");
+// L'usage entre dans la signature : un cookie temporaire de connexion ne peut pas servir de session.
+function signature(usage, charge) {
+  return crypto.createHmac("sha256", secret()).update(`${usage}\0${charge}`).digest("base64url");
 }
 
-function sceller(donnees, duree) {
+function sceller(usage, donnees, duree) {
   const charge = Buffer.from(JSON.stringify({ ...donnees, exp: Math.floor(Date.now() / 1000) + duree })).toString("base64url");
-  return `${charge}.${signature(charge)}`;
+  return `${charge}.${signature(usage, charge)}`;
 }
 
-function ouvrir(valeur) {
+function ouvrir(usage, valeur) {
   try {
     const [charge, sig] = String(valeur || "").split(".");
     if (!charge || !sig) return null;
-    const a = Buffer.from(sig), b = Buffer.from(signature(charge));
+    const a = Buffer.from(sig), b = Buffer.from(signature(usage, charge));
     if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
     const d = JSON.parse(Buffer.from(charge, "base64url").toString());
     return d.exp > Math.floor(Date.now() / 1000) ? d : null;
@@ -52,11 +53,18 @@ function ajouterCookie(res, nom, valeur, duree) {
   res.setHeader("Set-Cookie", deja ? [].concat(deja, ligne) : ligne);
 }
 
-const lireSession = (req) => ouvrir(lireCookie(req, SESSION));
-const poserSession = (res, { id, toxo }) => ajouterCookie(res, SESSION, sceller({ id, toxo: TOXO.includes(toxo) ? toxo : null }, DUREE_SESSION), DUREE_SESSION);
+const texte = (v) => typeof v === "string" && v.length > 0;
+function lireSession(req) {
+  const d = ouvrir("session", lireCookie(req, SESSION));
+  return d && texte(d.id) ? d : null;
+}
+function lireOAuth(req) {
+  const d = ouvrir("oauth", lireCookie(req, OAUTH));
+  return d && texte(d.state) && texte(d.nonce) && texte(d.verifier) ? d : null;
+}
+const poserSession = (res, { id, toxo }) => ajouterCookie(res, SESSION, sceller("session", { id, toxo: TOXO.includes(toxo) ? toxo : null }, DUREE_SESSION), DUREE_SESSION);
 const effacerSession = (res) => ajouterCookie(res, SESSION, "", 0);
-const lireOAuth = (req) => ouvrir(lireCookie(req, OAUTH));
-const poserOAuth = (res, d) => ajouterCookie(res, OAUTH, sceller(d, DUREE_OAUTH), DUREE_OAUTH);
+const poserOAuth = (res, d) => ajouterCookie(res, OAUTH, sceller("oauth", d, DUREE_OAUTH), DUREE_OAUTH);
 const effacerOAuth = (res) => ajouterCookie(res, OAUTH, "", 0);
 const adresseRetour = () => `${process.env.APP_URL || "https://neuf-lunes-pi.vercel.app"}/api/auth/callback`;
 

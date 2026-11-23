@@ -11,7 +11,7 @@ module.exports = function handler(req, res) {
 
     if (req.method === "GET") {
       poserSession(res, session);
-      return res.status(200).json({ connecte: true, toxo: session.toxo || null });
+      return res.status(200).json({ connecte: true, compte: session.id, toxo: session.toxo || null });
     }
     if (req.method === "POST") {
       const toxo = req.body && req.body.toxo;

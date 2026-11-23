@@ -426,15 +426,27 @@ details ul{margin-top:10px}
       var d = await r.json();
       store.set("connecte", d.connecte === true);
       if (d.connecte){
+        // Les données locales appartiennent à un seul compte : jamais de mélange sur un téléphone partagé.
+        var avant = store.get("compte", null);
+        if (avant !== d.compte){
+          store.set("toxo", null);
+          if (avant) store.set("historique", []);
+          store.set("compte", d.compte);
+        }
         if (d.toxo && d.toxo !== toxo()) store.set("toxo", d.toxo);
         else if (!d.toxo && toxo()) retenirToxo(toxo());
       }
-      majAccueil();
+      majAccueil(); dessinerHisto();
     } catch(e) {} // hors connexion : on garde le dernier état connu
   }
   $("b-deconnexion").onclick = async function(){
-    try { await fetch("/api/moi", { method: "DELETE" }); } catch(e) {}
-    store.set("connecte", false); store.set("toxo", null); store.set("historique", []);
+    var b = $("b-deconnexion");
+    try {
+      var r = await fetch("/api/moi", { method: "DELETE" });
+      if (!r.ok) throw new Error("refus");
+    } catch(e) { b.textContent = "Pas de réseau, réessaie"; return; }
+    b.textContent = "Se déconnecter";
+    store.set("connecte", false); store.set("compte", null); store.set("toxo", null); store.set("historique", []);
     pile = ["e-accueil"]; aller("e-accueil", true); majAccueil(); dessinerHisto();
   };
   $("code").addEventListener("input", majCommencer);
@@ -575,7 +587,7 @@ details ul{margin-top:10px}
       });
       var data = null; try { data = await r.json(); } catch(e) {}
       if (r.status === 413) throw new Error("Les photos sont trop lourdes. Envoie-en moins à la fois.");
-      if (r.status === 401){ store.set("connecte", false); majAccueil(); throw new Error("Ta connexion a expiré. Reviens à l'accueil pour te reconnecter."); }
+      if (r.status === 401){ store.set("connecte", false); majAccueil(); dessinerHisto(); throw new Error("Ta connexion a expiré. Reviens à l'accueil pour te reconnecter."); }
       if (!r.ok) throw new Error((data && data.erreur) || "Une erreur est survenue. Réessaie.");
       return data;
     }
@@ -688,7 +700,7 @@ details ul{margin-top:10px}
   // ---------- Historique (sur ce téléphone) ----------
   function sauver(d){ var h = store.get("historique", []); h.unshift(d); store.set("historique", h.slice(0, 8)); }
   function dessinerHisto(){
-    var h = store.get("historique", []);
+    var h = connecte() ? store.get("historique", []) : [];
     $("b-histo").classList.toggle("hidden", !h.length);
     var box = $("histo"); box.innerHTML = "";
     h.forEach(function(d){
