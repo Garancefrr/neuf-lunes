@@ -26,15 +26,15 @@ const INTERDITS_COLLES = {
 const LAIT_CRU = /\b(laits?|cremes?)\b(?:\s+\w+){0,3}?\s+crue?s?\b|\braw\b(?:\s+\w+){0,2}\s+milk\b|\bmilk\b(?:\s+\w+){0,2}\s+raw\b|\bunpasteuri[sz]ed\b|\bnon pasteuri\w*|\brohmilch\b|\blatte\b(?:\s+\w+){0,3}?\s+crudo\b|\bleche\b(?:\s+\w+){0,3}?\s+cruda\b/;
 const MOT_LAIT = /\b(laits?|milk|cremes?|cream)\b/;
 // Liste fermée des formules acceptées : tout autre tournure autour du lait est refusée.
-const FORME_PASTEURISEE = /\b(?:(?:laits?|cremes?)(?: (?:de|d|vache|entier|entiers|entiere|ecreme|ecremes|ecremee|demi|partiellement))* pasteurise(?:e|s|es)?|(?:milk|cream)(?: (?:whole|cow|cows|s|skimmed))* pasteuri[sz]ed|pasteuri[sz]ed(?: (?:whole|cow|cows|s|skimmed))* (?:milk|cream))\b/g;
-const LAIT_ETRANGER = /\b(milch|latte|leche|leite|melk|mjolk|lab|kulturen|caglio|fermenti|cuajo|cuajada|fermentos|kase|queso|formaggio|kaas)\b/;
+const FORME_PASTEURISEE = /^(?:(?:laits?|cremes?)(?: de vache| entiers?| entiere| (?:demi |partiellement )?ecreme(?:e|s|es)?)* pasteurise(?:e|s|es)?|(?:milk|cream)(?: whole)? pasteuri[sz]ed|pasteuri[sz]ed(?: whole| cow s| cows| cow| skimmed)* (?:milk|cream))(?: \d+)*$/;
+const LAIT_ETRANGER = /milch|melk|kaese|kaas|labaustausch|\b(latte|leche|leite|mjolk|lab|kulturen|caglio|fermenti|cuajo|cuajada|fermentos|kase|queso|formaggio)\b/;
 const FERMENTE = /\b(presures?|rennets?|coagulants?|coagulantes?|enzymes?|ferments?|cultures?)\b/;
 
-// Une fois les formules acceptées retirées, il ne doit plus rester aucune mention de lait ou de pasteurisation.
+// Ingrédient par ingrédient : chaque mention de lait doit être exactement une formule acceptée.
 function laitPasteurise(liste) {
-  const texte = mots(liste).join(" ");
-  const reste = texte.replace(FORME_PASTEURISEE, " ");
-  return reste !== texte && !MOT_LAIT.test(reste) && !/pasteuri/.test(reste);
+  const segments = String(liste).split(/[,;:()\[\]{}.\/+|•·]/).map((s) => mots(s).join(" ")).filter(Boolean);
+  const laits = segments.filter((s) => MOT_LAIT.test(s) || /pasteuri/.test(s));
+  return laits.length > 0 && laits.every((s) => FORME_PASTEURISEE.test(s));
 }
 // Fromage, ou produit laitier fermenté qui pourrait en être un.
 const laitierFermente = (p) => estFromage(p) || toutesListes(p).some((l) => { const t = mots(l).join(" "); return MOT_LAIT.test(t) && FERMENTE.test(t); });
@@ -51,6 +51,8 @@ function texteInterdit(s, categorie) {
 function interdit(p, categorie) {
   const listes = toutesListes(p);
   if (!listes.length || illisible(p.product_name) || illisible(p.brands) || listes.some(illisible)) return true;
+  // Aliments : une liste en français est obligatoire, les autres langues ne peuvent pas être contrôlées sûrement.
+  if (categorie === "aliment" && !String(p.ingredients_text_fr || "").trim()) return true;
   if (texteInterdit(nomComplet(p), categorie) || listes.some((l) => texteInterdit(l, categorie))) return true;
   // Un fromage ou produit fermenté n'est recommandé que si chaque liste dit clairement que son lait est pasteurisé.
   return categorie === "aliment" && laitierFermente(p) && !listes.every(laitPasteurise);
