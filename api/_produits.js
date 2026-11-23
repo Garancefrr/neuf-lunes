@@ -18,11 +18,20 @@ const INTERDITS = {
 const FROMAGES_CUITS = /\b(comte|emmental|emmentaler|beaufort|gruyere|parmesan|parmigiano)\b/;
 
 function interdit(p, categorie) {
-  const texte = mots(ingredients(p)).join(" "), nom = mots(p.product_name).join(" ");
-  if (INTERDITS[categorie].test(texte) || INTERDITS[categorie].test(nom)) return true;
-  if (categorie === "aliment") {
-    if (/\b(lait|creme) cru\b/.test(texte) && !FROMAGES_CUITS.test(nom)) return true;
-    if (/\b(camembert|brie|munster|roquefort|reblochon|morbier|feta|burrata|chevre|rillettes|pate|saucisson|chorizo|jambon|bayonne|sushi|sashimi)\b/.test(nom)) return true;
+  const listes = toutesListes(p);
+  if (!listes.length || illisible(p.product_name) || listes.some(illisible)) return true;
+  const nom = mots(p.product_name).join(" ");
+  if (INTERDITS[categorie].test(nom)) return true;
+  const aRisque = /\b(camemberts?|bries?|munster|roquefort|reblochon|morbier|feta|burrata|chevres?|rillettes|pates?|saucissons?|chorizo|jambons?|bayonne|sushis?|sashimis?)\b/;
+  if (categorie === "aliment" && aRisque.test(nom)) return true;
+  for (const liste of listes) {
+    const texte = mots(liste).join(" ");
+    if (INTERDITS[categorie].test(texte)) return true;
+    if (categorie === "aliment") {
+      const laitCru = /\b(laits?|cremes?)\b(?:\s+\w+){0,3}?\s+crue?s?\b/.test(texte) || /\braw milk\b/.test(texte);
+      // Seule exception au lait cru : un fromage à pâte pressée cuite, sans autre fromage à risque dans la liste.
+      if (laitCru && (!FROMAGES_CUITS.test(nom) || aRisque.test(texte))) return true;
+    }
   }
   return false;
 }
@@ -49,8 +58,12 @@ function photoSure(u) {
   return typeof u === "string" && /^https:\/\/images\.open(beauty|food)facts\.org\/[\w\/.\-]+$/.test(u) ? u : null;
 }
 
-const mots = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+const mots = (s) => String(s || "").normalize("NFKD").replace(/\p{Cf}/gu, "").replace(/\p{M}/gu, "").toLowerCase().replace(/œ/g, "oe").replace(/æ/g, "ae").split(/[^a-z0-9]+/).filter(Boolean);
 const ingredients = (p) => String(p.ingredients_text_fr || p.ingredients_text || "").trim();
+// Toutes les versions de la liste : un produit est écarté si l'une d'elles pose problème.
+const toutesListes = (p) => [...new Set([p.ingredients_text_fr, p.ingredients_text].map((l) => String(l || "").trim()).filter(Boolean))];
+// Caractères invisibles ou lettres d'un autre alphabet : la liste ne peut pas être contrôlée sûrement.
+const illisible = (s) => /\p{Cf}/u.test(String(s)) || /[^\P{L}\p{Script=Latin}]/u.test(String(s));
 const nomComplet = (p) => [p.brands && String(p.brands).split(",")[0].trim(), p.product_name].filter(Boolean).join(" - ");
 const image = (p) => photoSure(p.image_front_small_url) || photoSure(p.image_front_url);
 
@@ -157,8 +170,8 @@ async function candidats(base, categorie, recherches, exclu) {
       const p = liste[rang];
       if (!p || retenus.length >= MAX_CANDIDATS) continue;
       const code = String(p.code || ""), cle = mots(nomComplet(p)).join(" ");
-      const taille = ingredients(p).length;
-      if (!/^\d{8,14}$/.test(code) || !p.product_name || !image(p) || taille < 30 || taille > MAX_INGREDIENTS || interdit(p, categorie)) continue;
+      const tailles = toutesListes(p).map((l) => l.length);
+      if (!/^\d{8,14}$/.test(code) || !p.product_name || !image(p) || !tailles.length || Math.min(...tailles) < 30 || Math.max(...tailles) > MAX_INGREDIENTS || interdit(p, categorie)) continue;
       if (vus.has(code) || vus.has(cle) || code === (exclu && (exclu.code || exclu.codebarre)) || cle === nomExclu) continue;
       vus.add(code); vus.add(cle);
       retenus.push(p);
@@ -175,7 +188,7 @@ async function recommander({ client, modele, categorie, titre, idees, regles, si
   const liste = await candidats(base, categorie, recherches, exclu);
   if (!liste.length) return [];
 
-  const fiches = JSON.stringify(liste.map((p, i) => ({ numero: i + 1, produit: nettoyer(nomComplet(p), 120), ingredients: nettoyer(ingredients(p), MAX_INGREDIENTS) })));
+  const fiches = JSON.stringify(liste.map((p, i) => ({ numero: i + 1, produit: nettoyer(nomComplet(p), 120), listes_ingredients: toutesListes(p).map((l) => nettoyer(l, MAX_INGREDIENTS)) })));
   const consigne = `Tu vérifies des produits réels à recommander à une femme enceinte qui ${situation}.
 Produit à remplacer : « ${String(titre || "").slice(0, 120)} ».
 Idées de remplacement : ${idees.map((a) => a && a.nom).filter(Boolean).join(" ; ").slice(0, 400)}.
@@ -188,8 +201,8 @@ ${fiches}
 
 Choisis au maximum ${MAX_CHOIX} produits, du plus proche au moins proche du produit à remplacer. Garde un produit seulement si :
 - il a le même usage que le produit à remplacer (même type d'aliment ou de soin) ;
-- sa liste d'ingrédients paraît complète et lisible ;
-- AUCUN de ses ingrédients n'est classé « à éviter » ou « avec prudence » dans les règles.
+- toutes ses listes d'ingrédients paraissent complètes, lisibles et cohérentes entre elles ;
+- AUCUN ingrédient d'aucune de ses listes n'est classé « à éviter » ou « avec prudence » dans les règles.
 Au moindre doute, écarte-le. Une liste vide est une bonne réponse si aucun produit ne convient.
 "numero" est le numéro de la fiche. "pourquoi" tient en une phrase simple, en français, qui dit en quoi il ressemble au produit remplacé. N'écris jamais qu'il est « sans risque ».`;
 

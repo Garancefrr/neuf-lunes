@@ -66,6 +66,7 @@ RÈGLES DE RAISONNEMENT COSMÉTIQUES :
 var REGLES_ALTERNATIVES = `ALTERNATIVES :
 - Pour un aliment ou un plat « à éviter » ou « avec prudence », propose 2 à 3 alternatives concrètes dans "alternatives" (ex : comté ou emmental à la place du brie ; tiramisu industriel sans alcool ; viande bien cuite à la place du tartare ; plat cuit à la place de la salade). Pour un menu, choisis les alternatives parmi les plats de la carte quand c'est possible.
 - Si tout est « ok », "alternatives" peut rester vide.
+- N'écris jamais qu'une alternative est « sans risque » : dis plutôt qu'elle est adaptée ou à privilégier.
 - Dans chaque alternative, "recherche" contient 2 à 4 mots pour trouver des produits du même type dans une base de produits, sans marque (ex : « crème solaire minérale », « emmental », « sérum acide hyaluronique »). Pour un plat de restaurant, laisse "recherche" vide.
 
 PRODUIT IDENTIFIÉ :
