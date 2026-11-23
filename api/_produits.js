@@ -284,15 +284,24 @@ function estFromage(p) {
 // Garde-fou du verdict : une fiche collaborative qui cite une substance majeure ne peut jamais donner « oui » directement.
 const CRITIQUES = {
   beaute: /\b(retin\w*|tretinoin\w*|isotretinoin\w*|adapalene|tazarotene|hydroquinone|essential oils?|huiles? essentielles?)\b/,
-  aliment: /\b(alcool|alcohol|vin|vins|biere|bieres|rhum|cognac|kirsch|armagnac|calvados|liqueur|marsala|whisky|vodka|espadon|marlin|requin)\b/,
+  aliment: /\b(alcool|alcohol|vin|vins|wine|wines|biere|bieres|beer|rhum|rum|cognac|brandy|kirsch|armagnac|calvados|liqueur|marsala|whisky|whiskey|vodka|espadon|swordfish|marlin|requin|shark)\b/,
 };
+// Mêmes substances dans le texte collé, pour repérer un mot coupé (« ret.inol », « co-gnac »).
+const CRITIQUES_COLLES = {
+  beaute: /retinol|retinal|retinyl|retinoate|tretinoin|adapalene|tazarotene|hydroquinone|essentialoil|huileessentielle|huilesessentielles/,
+  aliment: /alcool|alcohol|cognac|rhum|kirsch|armagnac|calvados|liqueur|whisky|whiskey|vodka|espadon|swordfish|marlin|requin/,
+};
+// Les exceptions valent pour un ingrédient entier : elles ne peuvent pas se former à cheval sur deux ingrédients.
+const EXCEPTION_CRITIQUE = /^(?:vinaigres? de vin(?: \w+){0,2}|(?:\w+ ){0,3}sans (?:alcool|alcohol))$/;
+
+// La catégorie vient de la base qui a fourni la fiche, jamais de la réponse de l'IA.
 function substanceCritique(p, categorie) {
   const listes = toutesListes(p);
-  if (illisible(p.product_name) || listes.some(illisible)) return true;
-  return [p.product_name, ...listes].some((s) => {
-    const t = mots(s).join(" ").replace(/\bvinaigres? de vin\b/g, " ").replace(/\bsans (alcool|alcohol)\b/g, " ");
-    return CRITIQUES[categorie].test(t);
-  });
+  if (illisible(p.product_name) || illisible(p.brands) || listes.some(illisible)) return true;
+  return [p.brands, p.product_name, ...listes].some((s) => decouper(s).some((segment) => {
+    if (EXCEPTION_CRITIQUE.test(segment)) return false;
+    return CRITIQUES[categorie].test(segment) || CRITIQUES_COLLES[categorie].test(segment.replace(/[\s\d]/g, ""));
+  }));
 }
 
 module.exports = { BASES, photoSure, identifierProduit, recommander, meilleurProduit, interdit, estFromage, nettoyer, substanceCritique };

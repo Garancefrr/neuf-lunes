@@ -82,7 +82,7 @@ module.exports = async function handler(req, res) {
   if (mode === "texte" && texte.trim().length < 3) return res.status(400).json({ erreur: "Écris ta question." });
 
   // Code-barres lu sur la photo ou par la caméra : on cherche les ingrédients dans la base publique correspondante
-  let infoBase = "", source = null, ficheUtilisee = null;
+  let infoBase = "", source = null, ficheUtilisee = null, ficheCategorie = null;
   const codebarre = String(body.codebarre || "");
   if (mode === "scan") {
     if (!/^\d{8,14}$/.test(codebarre)) return res.status(400).json({ erreur: "Code-barres illisible. Réessaie." });
@@ -93,7 +93,7 @@ module.exports = async function handler(req, res) {
     else return res.status(404).json({ erreur: "Ce produit n'a pas de liste d'ingrédients dans nos bases. Prends plutôt sa liste d'ingrédients en photo.", introuvable: true });
     const base = mode === "beaute" ? BASES.beaute : BASES.aliment, p = mode === "beaute" ? beaute : aliment;
     source = { base: base.nom, codebarre, lien: `${base.url}/product/${codebarre}`, image: photoSure(p.image_front_small_url || p.image_front_url), nom: [p.brands, p.product_name].filter(Boolean).join(" - ") || null };
-    ficheUtilisee = p;
+    ficheUtilisee = p; ficheCategorie = base === BASES.beaute ? "beaute" : "aliment";
     infoBase = `Il n'y a pas de photo : analyse uniquement la fiche suivante. Elle peut être incomplète ou ancienne : ajoute toujours dans "a_verifier" de comparer avec la liste imprimée sur l'emballage.
 ${ficheEnDonnee(p, base.nom, codebarre)}`;
   } else if (/^\d{8,14}$/.test(codebarre) && (mode === "beaute" || mode === "produit")) {
@@ -101,7 +101,7 @@ ${ficheEnDonnee(p, base.nom, codebarre)}`;
     const p = await chercherProduit(base.url, codebarre);
     if (p && (p.ingredients_text_fr || p.ingredients_text)) {
       source = { base: base.nom, codebarre, lien: `${base.url}/product/${codebarre}`, image: photoSure(p.image_front_small_url || p.image_front_url), nom: [p.brands, p.product_name].filter(Boolean).join(" - ") || null };
-      ficheUtilisee = p;
+      ficheUtilisee = p; ficheCategorie = base === BASES.beaute ? "beaute" : "aliment";
       infoBase = `Ces données peuvent être incomplètes ou anciennes ; si une photo montre une liste d'ingrédients différente, la photo prime.
 ${ficheEnDonnee(p, base.nom, codebarre)}`;
     } else {
@@ -129,7 +129,7 @@ ${ficheEnDonnee(p, base.nom, codebarre)}`;
     const categorie = (mode === "beaute" || resultat.categorie === "beaute") ? "beaute" : "aliment";
 
     // Garde-fou indépendant de l'IA : un « oui » est refusé si la fiche cite une substance majeure.
-    if (ficheUtilisee && resultat.lisible !== false && resultat.verdict === "ok" && substanceCritique(ficheUtilisee, categorie)) {
+    if (ficheUtilisee && resultat.lisible !== false && resultat.verdict === "ok" && substanceCritique(ficheUtilisee, ficheCategorie)) {
       resultat.verdict = "prudence";
       resultat.resume = `${resultat.resume || ""} Attention : la fiche de ce produit cite un ingrédient sensible, vérifie la liste sur l'emballage.`.trim();
       resultat.a_verifier = [...(Array.isArray(resultat.a_verifier) ? resultat.a_verifier : []), "Compare la liste imprimée sur l'emballage avec la fiche du produit."];
