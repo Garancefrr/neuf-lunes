@@ -20,22 +20,26 @@ const FROMAGES_CUITS = /\b(comte|emmental|emmentaler|beaufort|gruyere|parmesan|p
 const A_RISQUE = /\b(camemberts?|bries?|coulommiers|munster|roquefort|gorgonzola|bleus?|pont l eveque|maroilles|livarot|epoisses|chaource|neufchatel|vacherin|mont d or|reblochon|morbier|raclette|saint nectaire|tomme|tommes|feta|burrata|mozzarella|chevres?|rillettes|pates?|saucissons?|chorizo|jambons?|bayonne|parme|serrano|sushis?|sashimis?)\b/;
 // Mêmes substances cherchées dans le texte collé, pour repérer un mot coupé (« ret.inol », « lait-cru »).
 const INTERDITS_COLLES = {
-  beaute: /retinol|retinal|retinyl|retinoate|tretinoin|adapalene|hydroquinone|salicyl|paraben|benzophenone|oxybenzone|homosalate|octocrylene|octinoxate|phenoxyethanol|parfum|fragrance|triclosan|resorcinol/,
-  aliment: /alcool|alcohol|laitcru|laitscrus|cremecrue|rawmilk|soja|espadon|roquefort|camembert|reblochon|rillettes|saucisson|chorizo|guarana|cafeine|caffeine|rhum|cognac|kirsch|liqueur/,
+  beaute: /retinol|retinal|retinyl|retinoate|tretinoin|adapalene|tazarotene|hydroxypinacolone|hydroquinone|salicyl|paraben|benzophenone|oxybenzone|methoxycinnamate|octinoxate|homosalate|methylbenzylidene|octocrylene|phenoxyethanol|parfum|fragrance|butylphenyl|phenylenediamine|resorcinol|triclosan|cyclopentasiloxane|cyclotetrasiloxane|cyclomethicone|thioglycolate|dihydroxyacetone/,
+  aliment: /alcool|alcohol|laitcru|laitscrus|cremecrue|rawmilk|rohmilch|lattecrudo|lechecruda|unpasteuri|nonpasteuri|soja|tofu|reglisse|espadon|marlin|requin|anguille|dorade|tarama|surimi|roquefort|camembert|coulommiers|munster|gorgonzola|maroilles|livarot|epoisses|chaource|neufchatel|vacherin|reblochon|morbier|raclette|burrata|mozzarella|rillettes|saucisson|chorizo|jambon|bayonne|serrano|sushi|sashimi|guarana|cafeine|caffeine|taurine|rhum|cognac|kirsch|armagnac|calvados|marsala|whisky|vodka|liqueur/,
 };
+const LAIT_CRU = /\b(laits?|cremes?)\b(?:\s+\w+){0,3}?\s+crue?s?\b|\braw\b(?:\s+\w+){0,2}\s+milk\b|\bmilk\b(?:\s+\w+){0,2}\s+raw\b|\bunpasteuri[sz]ed\b|\bnon pasteuri\w*|\brohmilch\b|\blatte crudo\b|\bleche cruda\b/;
+const PASTEURISE = /\bpasteuri[sz]\w*/;
 
 // Aucun produit au lait cru n'est recommandé, même un fromage à pâte cuite : l'identité du fromage ne peut pas être garantie.
 function texteInterdit(s, categorie) {
   const m = mots(s), texte = m.join(" ");
-  if (INTERDITS[categorie].test(texte) || INTERDITS_COLLES[categorie].test(m.join(""))) return true;
+  if (INTERDITS[categorie].test(texte) || INTERDITS_COLLES[categorie].test(m.join("").replace(/\d/g, ""))) return true;
   if (categorie !== "aliment") return false;
-  return A_RISQUE.test(texte) || /\b(laits?|cremes?)\b(?:\s+\w+){0,3}?\s+crue?s?\b/.test(texte) || /\braw milk\b/.test(texte);
+  return A_RISQUE.test(texte) || LAIT_CRU.test(texte);
 }
 
 function interdit(p, categorie) {
   const listes = toutesListes(p);
   if (!listes.length || illisible(p.product_name) || illisible(p.brands) || listes.some(illisible)) return true;
-  return texteInterdit(nomComplet(p), categorie) || listes.some((l) => texteInterdit(l, categorie));
+  if (texteInterdit(nomComplet(p), categorie) || listes.some((l) => texteInterdit(l, categorie))) return true;
+  // Un fromage n'est recommandé que si chaque liste dit clairement qu'il est pasteurisé.
+  return categorie === "aliment" && estFromage(p) && !listes.every((l) => PASTEURISE.test(mots(l).join(" ")));
 }
 const nettoyer = (s, max) => String(s || "").replace(/\p{Cf}/gu, "").replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
 
@@ -60,7 +64,11 @@ function photoSure(u) {
   return typeof u === "string" && /^https:\/\/images\.open(beauty|food)facts\.org\/[\w\/.\-]+$/.test(u) ? u : null;
 }
 
-const mots = (s) => String(s || "").normalize("NFKD").replace(/\p{Cf}/gu, "").replace(/\p{M}/gu, "").toLowerCase().replace(/œ/g, "oe").replace(/æ/g, "ae").replace(/([a-z])(\d)/g, "$1 $2").replace(/(\d)([a-z])/g, "$1 $2").split(/[^a-z0-9]+/).filter(Boolean);
+const simplifier = (s) => String(s || "").normalize("NFKD").replace(/\p{Cf}/gu, "").replace(/\p{M}/gu, "").toLowerCase().replace(/œ/g, "oe").replace(/æ/g, "ae");
+// Pour le filtre : une note collée à un mot (« thon1 ») est séparée du mot.
+const mots = (s) => simplifier(s).replace(/([a-z])(\d)/g, "$1 $2").replace(/(\d)([a-z])/g, "$1 $2").split(/[^a-z0-9]+/).filter(Boolean);
+// Pour reconnaître un produit : les variantes (« q10 », « spf50 ») restent entières.
+const motsProduit = (s) => simplifier(s).split(/[^a-z0-9]+/).filter(Boolean);
 const ingredients = (p) => String(p.ingredients_text_fr || p.ingredients_text || "").trim();
 // Toutes les versions de la liste : un produit est écarté si l'une d'elles pose problème.
 const toutesListes = (p) => [...new Set([p.ingredients_text_fr, p.ingredients_text].map((l) => String(l || "").trim()).filter(Boolean))];
@@ -139,15 +147,17 @@ async function completerAliments(base, listes) {
 
 // Retrouve la fiche du produit photographié. Mieux vaut pas d'image qu'une image du mauvais produit.
 function meilleurProduit(liste, marque, nom) {
-  const racines = (s) => mots(s).map((m) => (m.length > 3 ? m.replace(/s$/, "") : m));
-  const motsMarque = racines(marque), motsNom = racines(nom).filter((m) => m.length > 2 && !motsMarque.includes(m));
+  const racines = (s) => motsProduit(s).map((m) => (m.length > 3 && !/\d/.test(m) ? m.replace(/s$/, "") : m));
+  const contenance = /^\d+([.,]\d+)?(g|kg|mg|ml|cl|l)$/;
+  const motsMarque = racines(marque), motsNom = racines(nom).filter((m) => (m.length > 2 || /\d/.test(m)) && !contenance.test(m) && !motsMarque.includes(m));
+  const variantes = motsNom.filter((m) => /\d/.test(m));
   if (!motsNom.length || (!motsMarque.length && motsNom.length < 2)) return null;
   let meilleur = null, score = 0;
   for (const p of liste) {
     if (!image(p) || !/^\d{8,14}$/.test(String(p.code || ""))) continue;
     // Dans la base, la marque et le nom sont parfois inversés : on les compare ensemble.
     const fiche = racines(`${p.brands || ""} ${p.product_name || ""}`);
-    if (!motsMarque.every((m) => fiche.includes(m))) continue;
+    if (!motsMarque.every((m) => fiche.includes(m)) || !variantes.every((m) => fiche.includes(m))) continue;
     const nomProduit = motsMarque.length ? fiche : racines(p.product_name);
     const communs = motsNom.filter((m) => nomProduit.includes(m)).length / motsNom.length;
     if (communs < (motsMarque.length ? 0.6 : 1)) continue;
