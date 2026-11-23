@@ -120,7 +120,8 @@ function construireConsigne(mode, toxo, precision, infoBase, periode) {
     "Réponds UNIQUEMENT par un objet JSON valide, sans texte autour, au format :\n" +
     '{\n "lisible": true,\n "categorie": "aliment" | "beaute",\n "titre": "nom du produit, du restaurant ou du plat (court)",\n "verdict": "ok" | "prudence" | "eviter",\n "resume": "1 à 2 phrases très simples qui disent si elle peut en manger ou l\'utiliser, et pourquoi",\n "elements": [ { "nom": "...", "verdict": "ok"|"prudence"|"eviter", "raison": "une phrase", "conseil": "une phrase, peut être vide" } ],\n "alternatives": [ { "nom": "alternative", "pourquoi": "une phrase", "recherche": "le type de produit en 1 à 3 mots, sans marque ni adjectif, ou chaîne vide pour un plat de restaurant" } ],\n "questions": [ "question à poser au serveur ou au vendeur" ],\n "a_verifier": [ "information absente ou illisible" ]\n}\n' +
     "Pour un menu, trie \"elements\" : d'abord \"ok\", puis \"prudence\", puis \"eviter\".\n" +
-    "Si l'image n'est pas lisible ou ne montre ni aliment ni produit de beauté, renvoie \"lisible\": false et explique dans \"resume\" quoi refaire (rapprocher, éviter le reflet, cadrer la liste des ingrédients).";
+    "Si l'image n'est pas lisible ou ne montre ni aliment ni produit de beauté, renvoie \"lisible\": false et explique dans \"resume\" quoi refaire (rapprocher, éviter le reflet, cadrer la liste des ingrédients)." +
+    (periode === "allaitement" ? "\nRAPPEL FINAL : elle n'est plus enceinte, elle allaite. Les règles « ELLE ALLAITE » priment sur toutes les autres. Un aliment écarté seulement à cause de la listériose, de la toxoplasmose ou de la salmonellose (brie, fromage au lait cru, charcuterie, tartare, sushi) est \"ok\", avec au besoin un conseil d'hygiène. N'emploie jamais les mots « grossesse », « enceinte » ou « bébé à naître »." : "");
 }
 
 function lireJSON(text) {
