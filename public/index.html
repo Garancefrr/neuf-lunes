@@ -262,6 +262,7 @@ details ul{margin-top:10px}
       <li>Choisis <strong>Sur l'écran d'accueil</strong>.</li>
       <li>Appuie sur <strong>Ajouter</strong>.</li>
     </ol>
+    <ol class="simple small hidden" id="installer-android" style="padding-left:22px"></ol>
     <button type="button" class="btn plein" id="b-installer">Installer l'appli</button>
   </div>
 
@@ -722,12 +723,50 @@ details ul{margin-top:10px}
       $("c-installer").classList.remove("hidden");
       $("b-installer").onclick = function(){ $("installer-ios").classList.remove("hidden"); $("installer-txt").textContent = "Sur iPhone, l'ajout se fait depuis Safari, en trois gestes :"; $("b-installer").classList.add("hidden"); };
     }
+    // Android : installation directe si le navigateur le permet, sinon les gestes adaptés à ce navigateur.
+    var ua = navigator.userAgent;
+    function etapesAndroid(){
+      var fin = "C'est fini ! Retourne sur l'écran principal de ton téléphone : tu y verras la petite image <strong>Neuf Lunes</strong>. Appuie dessus pour ouvrir l'appli.";
+      if (/; wv\)/i.test(ua)) return { txt: "Pas de panique, il faut juste ouvrir cette page dans Chrome (l'application pour aller sur internet). Suis ces étapes :", etapes: ["Regarde tout en haut à droite de l'écran et appuie sur les <strong>3 petits points ⋮</strong>.", "Dans la liste qui s'ouvre, appuie sur <strong>Ouvrir dans Chrome</strong>.", "La même page s'ouvre. Appuie sur le bouton vert <strong>Installer l'appli</strong>."] };
+      if (/SamsungBrowser/i.test(ua)) return { txt: "Suis ces étapes, une par une :", etapes: ["Regarde tout en bas à droite de l'écran et appuie sur les <strong>3 petits traits ☰</strong>.", "Dans la liste qui s'ouvre, appuie sur <strong>Ajouter la page à</strong>.", "Appuie sur <strong>Écran d'accueil</strong>.", "Appuie sur <strong>Ajouter</strong>.", fin] };
+      if (/Firefox/i.test(ua)) return { txt: "Suis ces étapes, une par une :", etapes: ["Regarde en haut ou en bas à droite de l'écran et appuie sur les <strong>3 petits points ⋮</strong>.", "Dans la liste qui s'ouvre, appuie sur <strong>Ajouter à l'écran d'accueil</strong> (ou sur <strong>Installer</strong>).", "Appuie sur <strong>Ajouter</strong> pour confirmer.", fin] };
+      return { txt: "Suis ces étapes, une par une :", etapes: ["Regarde tout en haut à droite de l'écran et appuie sur les <strong>3 petits points ⋮</strong>.", "Dans la liste qui s'ouvre, appuie sur <strong>Installer l'application</strong>. Si tu ne le vois pas, appuie sur <strong>Ajouter à l'écran d'accueil</strong>.", "Une petite fenêtre s'ouvre : appuie sur <strong>Installer</strong> (ou <strong>Ajouter</strong>).", fin] };
+    }
+    function installationFinie(){
+      $("installer-txt").innerHTML = "<strong>C'est installé !</strong> Retourne sur l'écran principal de ton téléphone : tu y verras la petite image <strong>Neuf Lunes</strong>. La prochaine fois, appuie simplement dessus pour ouvrir l'appli.";
+      $("installer-android").classList.add("hidden");
+      $("b-installer").classList.add("hidden");
+    }
+    function montrerEtapesAndroid(){
+      var g = etapesAndroid();
+      $("installer-txt").textContent = g.txt;
+      $("installer-android").innerHTML = g.etapes.map(function(x){ return "<li>" + x + "</li>"; }).join("");
+      $("installer-android").classList.remove("hidden");
+      $("b-installer").classList.add("hidden");
+    }
+    if (/android/i.test(ua)){
+      $("c-installer").classList.remove("hidden");
+      $("installer-txt").textContent = "Mets Neuf Lunes sur ton téléphone, comme une vraie appli, avec sa petite image. C'est gratuit et ça prend 30 secondes.";
+      $("b-installer").onclick = async function(){
+        if (!invite) return montrerEtapesAndroid();
+        var e = invite; invite = null;
+        e.prompt();
+        var choix = await e.userChoice;
+        if (choix && choix.outcome === "accepted") installationFinie(); else montrerEtapesAndroid();
+      };
+    }
     window.addEventListener("beforeinstallprompt", function(e){
       e.preventDefault(); invite = e;
-      $("c-installer").classList.remove("hidden");
-      $("b-installer").onclick = async function(){ invite.prompt(); var choix = await invite.userChoice; if (choix && choix.outcome === "accepted") $("c-installer").classList.add("hidden"); invite = null; };
+      if (/android/i.test(ua)){
+        $("installer-txt").textContent = "Appuie sur le bouton vert ci-dessous. Une petite fenêtre s'ouvre : appuie sur « Installer ». C'est gratuit et ça prend 30 secondes.";
+      } else {
+        $("c-installer").classList.remove("hidden");
+        $("b-installer").onclick = async function(){ invite.prompt(); var choix = await invite.userChoice; if (choix && choix.outcome === "accepted") $("c-installer").classList.add("hidden"); invite = null; };
+      }
     });
-    window.addEventListener("appinstalled", function(){ $("c-installer").classList.add("hidden"); });
+    window.addEventListener("appinstalled", function(){
+      if (/android/i.test(ua)) installationFinie(); else $("c-installer").classList.add("hidden");
+    });
   }
   if (avecCode && "serviceWorker" in navigator){
     window.addEventListener("load", function(){ navigator.serviceWorker.register("/sw.js").catch(function(){}); });
