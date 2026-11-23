@@ -112,7 +112,7 @@ async function chercherClassique(base, termes, taille) {
   const q = new URLSearchParams({ search_terms: String(termes).slice(0, 100), search_simple: "1", action: "process", json: "1", page_size: String(taille), fields: CHAMPS });
   for (let essai = 0; essai < 3; essai++) {
     try {
-      const r = await fetch(`${base.url}/cgi/search.pl?${q}`, { headers: { "User-Agent": "NeufLunes/1.0" }, signal: AbortSignal.timeout(4000) });
+      const r = await fetch(`${base.url}/cgi/search.pl?${q}`, { headers: { "User-Agent": "NeufLunes/1.0" }, signal: AbortSignal.timeout(6000) });
       if (r.ok) {
         const d = await r.json();
         return Array.isArray(d.products) ? d.products : [];
@@ -202,12 +202,13 @@ async function identifierProduit(categorie, identifie) {
 }
 
 async function candidats(base, categorie, recherches, exclu) {
-  let listes = await Promise.all(recherches.slice(0, 3).map((t) => chercher(base, t, 12)));
+  // Soins et maquillage : beaucoup de fiches sont écartées par le filtre, on en examine donc davantage.
+  let listes = await Promise.all(recherches.slice(0, 3).map((t) => chercher(base, t, categorie === "beaute" ? 100 : 12)));
   if (categorie === "aliment") listes = [await completerAliments(base, listes)];
   const vus = new Set(), retenus = [];
   const nomExclu = exclu && exclu.nom ? mots(exclu.nom).join(" ") : null;
   // Un peu de chaque recherche, pour garder de la variété.
-  for (let rang = 0; rang < 12 && retenus.length < MAX_CANDIDATS; rang++) {
+  for (let rang = 0; rang < 100 && retenus.length < MAX_CANDIDATS; rang++) {
     for (const liste of listes) {
       const p = liste[rang];
       if (!p || retenus.length >= MAX_CANDIDATS) continue;
