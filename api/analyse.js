@@ -107,6 +107,7 @@ Ingrédients : ${(p.ingredients_text_fr || p.ingredients_text).slice(0, 4000)}`;
     // Fiche du produit photographié, si son nom est lisible. Le verdict reste fondé sur la photo.
     if (!source && resultat.lisible !== false && mode !== "menu") {
       source = await identifierProduit(categorie, resultat.produit_identifie).catch(() => null);
+      console.info("fiche:", { nomLu: !!(resultat.produit_identifie && resultat.produit_identifie.trouve), trouvee: !!source });
     }
     if (source) resultat.source = source;
     delete resultat.produit_identifie;
