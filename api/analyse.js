@@ -2,11 +2,33 @@
 // La clé API reste ici, côté serveur : elle n'est jamais envoyée au navigateur.
 // Variable à définir dans Vercel : ANTHROPIC_API_KEY.
 
+const AnthropicSDK = require("@anthropic-ai/sdk");
 const { construireConsigne, lireJSON } = require("./_consigne.js");
+const { lireSession } = require("./_session.js");
 
+const Anthropic = AnthropicSDK.default || AnthropicSDK;
 const MODELE = "claude-sonnet-5-5";
 const MAX_PHOTOS = 4;
 const MODES = ["produit", "menu", "beaute", "texte"];
+
+// Format imposé à la réponse : évite les réponses mal formées.
+const VERDICT = { type: "string", enum: ["ok", "prudence", "eviter"] };
+const SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["lisible", "categorie", "titre", "verdict", "resume", "elements", "alternatives", "questions", "a_verifier"],
+  properties: {
+    lisible: { type: "boolean" },
+    categorie: { type: "string", enum: ["aliment", "beaute"] },
+    titre: { type: "string" },
+    verdict: VERDICT,
+    resume: { type: "string" },
+    elements: { type: "array", items: { type: "object", additionalProperties: false, required: ["nom", "verdict", "raison", "conseil"], properties: { nom: { type: "string" }, verdict: VERDICT, raison: { type: "string" }, conseil: { type: "string" } } } },
+    alternatives: { type: "array", items: { type: "object", additionalProperties: false, required: ["nom", "pourquoi", "recherche"], properties: { nom: { type: "string" }, pourquoi: { type: "string" }, recherche: { type: "string" } } } },
+    questions: { type: "array", items: { type: "string" } },
+    a_verifier: { type: "array", items: { type: "string" } },
+  },
+};
 
 async function chercherProduit(baseUrl, codebarre) {
   try {
@@ -64,7 +86,10 @@ module.exports = async function handler(req, res) {
   if (typeof body === "string") { try { body = JSON.parse(body || "{}"); } catch (e) { body = {}; } }
   const { mode, toxo, precision, images } = body;
 
-  // Accès libre : aucune vérification de code.
+  let session = null;
+  try { session = lireSession(req); } catch (e) { console.error("session:", e.name); }
+  if (!session) return res.status(401).json({ erreur: "Connecte-toi pour continuer." });
+
   if (!MODES.includes(mode)) return res.status(400).json({ erreur: "Type d'analyse inconnu." });
 
   const photos = (Array.isArray(images) ? images : [])
@@ -94,17 +119,17 @@ Ingrédients : ${(p.ingredients_text_fr || p.ingredients_text).slice(0, 4000)}`;
   contenu.push({ type: "text", text: construireConsigne(mode, toxo, texte, infoBase) });
 
   try {
-    const r = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-api-key": cle, "anthropic-version": "2023-06-01" },
-      body: JSON.stringify({ model: MODELE, max_tokens: 3000, messages: [{ role: "user", content: contenu }] }),
+    const client = new Anthropic({ apiKey: cle, timeout: 55000, maxRetries: 1 });
+    const data = await client.beta.messages.create({
+      model: MODELE,
+      max_tokens: 8000,
+      betas: ["server-side-fallback-2026-07-01"],
+      fallbacks: "default",
+      output_config: { format: { type: "json_schema", schema: SCHEMA } },
+      messages: [{ role: "user", content: contenu }],
     });
-    const data = await r.json();
-    if (!r.ok) {
-      console.error("Erreur API", r.status, data);
-      const msg = r.status === 429 ? "Trop de demandes d'un coup. Attends une minute puis réessaie." : "L'analyse a échoué. Réessaie dans un instant.";
-      return res.status(502).json({ erreur: msg });
-    }
+    if (data.stop_reason === "refusal") return res.status(422).json({ erreur: "Je ne peux pas analyser cette demande. Demande conseil à ta sage-femme ou à ton pharmacien." });
+    if (data.stop_reason === "max_tokens") return res.status(502).json({ erreur: "La réponse était trop longue. Envoie moins de photos à la fois." });
     const txt = (data.content || []).filter((c) => c.type === "text").map((c) => c.text).join("");
     const resultat = lireJSON(txt);
     if (source) resultat.source = source;
@@ -121,7 +146,10 @@ Ingrédients : ${(p.ingredients_text_fr || p.ingredients_text).slice(0, 4000)}`;
     }
     return res.status(200).json(resultat);
   } catch (e) {
-    console.error(e);
+    // Ne jamais journaliser les photos ni la question : seulement le type d'erreur.
+    console.error("analyse:", e && e.name, e && e.status);
+    if (e instanceof Anthropic.RateLimitError) return res.status(502).json({ erreur: "Trop de demandes d'un coup. Attends une minute puis réessaie." });
+    if (e instanceof Anthropic.APIError) return res.status(502).json({ erreur: "L'analyse a échoué. Réessaie dans un instant." });
     return res.status(500).json({ erreur: "La réponse n'a pas pu être lue. Réessaie avec une photo plus nette." });
   }
 };

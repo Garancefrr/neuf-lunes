@@ -205,6 +205,17 @@ details ul{margin-top:10px}
     <p>Un aliment, une carte de restaurant, un soin : prends-le en photo et sache tout de suite si c'est bon pour toi et bébé.</p>
   </div>
 
+  <div class="carte accueil-q hidden" id="c-connexion">
+    <h2 style="font-size:21px">Connecte-toi pour commencer</h2>
+    <p class="muted small">Une seule fois : l'appli s'en souviendra ensuite sur ce téléphone.</p>
+    <a class="btn doux" id="b-google" href="/api/auth/google" style="text-decoration:none">
+      <svg width="22" height="22" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.7 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.5 3-2.2 5.5-4.7 7.2l7.6 5.9c4.4-4.1 6.9-10.1 6.9-17.6z"/><path fill="#FBBC05" d="M10.5 28.7c-.5-1.4-.8-3-.8-4.7s.3-3.2.8-4.7l-7.9-6.1C1 16.5 0 20.1 0 24s1 7.5 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.9 2.3-8.3 2.3-6.3 0-11.6-4.2-13.5-9.9l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>
+      Continuer avec Google
+    </a>
+    <div class="erreur hidden" id="err-connexion" role="alert">La connexion n'a pas abouti. Réessaie.</div>
+    <p class="note">On utilise seulement un identifiant de compte, ni ton nom ni ton e-mail.</p>
+  </div>
+
   <div class="carte accueil-q" id="c-bienvenue">
     <h2 style="font-size:21px">Une seule question avant de commencer</h2>
     <p class="muted small">Es-tu immunisée contre la toxoplasmose ? C'est écrit sur ta prise de sang du début de grossesse.</p>
@@ -345,6 +356,7 @@ details ul{margin-top:10px}
     <p class="small muted">Cette appli aide à repérer les risques. Elle ne remplace pas l'avis de ta sage-femme, de ton médecin ou de ton pharmacien. Sources : <a href="https://www.sante.fr/node/7070507" target="_blank" rel="noopener">Santé publique France</a> et <a href="https://ansm.sante.fr/documents/reference/recommandations-pour-les-produits-cosmetiques" target="_blank" rel="noopener">ANSM</a>.</p>
   </div>
   <button type="button" class="btn doux" id="b-effacer">Effacer l'historique</button>
+  <button type="button" class="btn doux" id="b-deconnexion">Se déconnecter</button>
 </section>
 
 </main>
@@ -399,19 +411,44 @@ details ul{margin-top:10px}
     b.onclick = function(){ choixToxo = b.dataset.toxo; majPuces(); majCommencer(); };
   });
   document.querySelectorAll("#e-reglages [data-toxo]").forEach(function(b){
-    b.onclick = function(){ store.set("toxo", b.dataset.toxo); choixToxo = null; majPuces(); };
+    b.onclick = function(){ retenirToxo(b.dataset.toxo); choixToxo = null; majPuces(); };
   });
+  function retenirToxo(v){
+    store.set("toxo", v);
+    fetch("/api/moi", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ toxo: v }) }).catch(function(){});
+  }
+  function connecte(){ return store.get("connecte", false) === true; }
+  // L'appli s'ouvre tout de suite si la personne est déjà connectée, puis vérifie en arrière-plan.
+  async function verifierSession(){
+    try {
+      var r = await fetch("/api/moi", { cache: "no-store" });
+      if (!r.ok) return;
+      var d = await r.json();
+      store.set("connecte", d.connecte === true);
+      if (d.connecte){
+        if (d.toxo && d.toxo !== toxo()) store.set("toxo", d.toxo);
+        else if (!d.toxo && toxo()) retenirToxo(toxo());
+      }
+      majAccueil();
+    } catch(e) {} // hors connexion : on garde le dernier état connu
+  }
+  $("b-deconnexion").onclick = async function(){
+    try { await fetch("/api/moi", { method: "DELETE" }); } catch(e) {}
+    store.set("connecte", false); store.set("toxo", null); store.set("historique", []);
+    pile = ["e-accueil"]; aller("e-accueil", true); majAccueil(); dessinerHisto();
+  };
   $("code").addEventListener("input", majCommencer);
   $("code2").addEventListener("change", function(){ store.set("code", $("code2").value.trim()); });
   function majCommencer(){ $("b-commencer").disabled = !choixToxo; }
   $("b-commencer").onclick = function(){
-    store.set("toxo", choixToxo);
+    retenirToxo(choixToxo);
     choixToxo = null; majAccueil();
   };
-  function pret(){ return !!toxo(); }
+  function pret(){ return connecte() && !!toxo(); }
   function majAccueil(){
     var ok = pret();
-    $("c-bienvenue").classList.toggle("hidden", ok);
+    $("c-connexion").classList.toggle("hidden", connecte());
+    $("c-bienvenue").classList.toggle("hidden", !connecte() || !!toxo());
     $("tuiles").style.opacity = ok ? "1" : ".45";
     $("tuiles").style.pointerEvents = ok ? "auto" : "none";
     $("code2").value = store.get("code", "");
@@ -538,7 +575,7 @@ details ul{margin-top:10px}
       });
       var data = null; try { data = await r.json(); } catch(e) {}
       if (r.status === 413) throw new Error("Les photos sont trop lourdes. Envoie-en moins à la fois.");
-      if (r.status === 401) throw new Error("Ce lien n'est pas complet. Rouvre l'appli avec le lien qu'on t'a envoyé.");
+      if (r.status === 401){ store.set("connecte", false); majAccueil(); throw new Error("Ta connexion a expiré. Reviens à l'accueil pour te reconnecter."); }
       if (!r.ok) throw new Error((data && data.erreur) || "Une erreur est survenue. Réessaie.");
       return data;
     }
@@ -685,7 +722,11 @@ details ul{margin-top:10px}
   }
 
   // ---------- Démarrage ----------
-  majAccueil(); dessinerHisto(); dessinerVignettes();
+  try {
+    var retourConnexion = new URLSearchParams(location.search);
+    if (retourConnexion.get("connexion") === "erreur"){ $("err-connexion").classList.remove("hidden"); history.replaceState(null, "", location.pathname); }
+  } catch(e) {}
+  majAccueil(); dessinerHisto(); dessinerVignettes(); verifierSession();
   if (BACKEND === "claude" && window.claude && typeof window.claude.use === "function"){
     window.claude.use("sample").then(function(s){ sample = s; }).catch(function(){});
   }

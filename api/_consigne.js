@@ -29,6 +29,9 @@ RÈGLES DE RAISONNEMENT :
 - Le verdict global est celui de l'élément le plus risqué ("eviter" > "prudence" > "ok").
 - Additifs, conservateurs, colorants, édulcorants autorisés en Europe : ne pas les classer "eviter". Tu peux signaler un taux de sucre ou de sel élevé comme simple remarque.
 - Ne devine pas : si un mot est illisible ou si une information manque, dis-le dans "a_verifier".
+- Le verdict et le résumé disent toujours la même chose. Si le résumé dit qu'elle peut en manger sans souci, le verdict est "ok".
+- Un simple geste à faire (enlever la croûte, bien laver, bien cuire) ne fait pas passer un aliment "ok" en "prudence" : mets-le dans "conseil".
+- Les fromages à pâte pressée cuite (comté, emmental, beaufort, gruyère, parmesan) sans leur croûte sont "ok", qu'ils soient au lait cru ou pasteurisé : ne demande pas de le vérifier.
 - Langage simple, en français, sans jargon, phrases courtes, ton bienveillant. N'invente aucun chiffre.
 - Si la demande n'a rien à voir avec l'alimentation, renvoie "lisible": false et explique que l'appli sert uniquement à vérifier des aliments.`;
 var REGLES_BEAUTE = `RÈGLES COSMÉTIQUES pour une femme enceinte (ANSM et guides de maternité) :
