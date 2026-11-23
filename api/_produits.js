@@ -18,27 +18,24 @@ const INTERDITS = {
 const FROMAGES_CUITS = /\b(comte|emmental|emmentaler|beaufort|gruyere|parmesan|parmigiano)\b/;
 
 const A_RISQUE = /\b(camemberts?|bries?|coulommiers|munster|roquefort|gorgonzola|bleus?|pont l eveque|maroilles|livarot|epoisses|chaource|neufchatel|vacherin|mont d or|reblochon|morbier|raclette|saint nectaire|tomme|tommes|feta|burrata|mozzarella|chevres?|rillettes|pates?|saucissons?|chorizo|jambons?|bayonne|parme|serrano|sushis?|sashimis?)\b/;
-const PLAT_PREPARE = /\b(gratins?|pizzas?|quiches?|tartes?|sauces?|melanges?|croques?|salades?|sandwichs?|feuilletes?|fondues?|plats?|soupes?|burgers?|lasagnes?|tartiflette)\b/;
-// Exception au lait cru : uniquement un fromage cuit nature, dont la liste ne contient que ces mots.
-const BASE_FROMAGE = new Set("ingredients lait laits cru crus crue crues de du d la le et vache entier sel ferments ferment lactiques lactique presure coagulant microbien culture cultures croute non comestible".split(" "));
-const fromageCuitNature = (nomProduit, texte) => FROMAGES_CUITS.test(nomProduit) && !PLAT_PREPARE.test(nomProduit) && texte.split(" ").every((m) => /^\d+$/.test(m) || BASE_FROMAGE.has(m));
+// Mêmes substances cherchées dans le texte collé, pour repérer un mot coupé (« ret.inol », « lait-cru »).
+const INTERDITS_COLLES = {
+  beaute: /retinol|retinal|retinyl|retinoate|tretinoin|adapalene|hydroquinone|salicyl|paraben|benzophenone|oxybenzone|homosalate|octocrylene|octinoxate|phenoxyethanol|parfum|fragrance|triclosan|resorcinol/,
+  aliment: /alcool|alcohol|laitcru|laitscrus|cremecrue|rawmilk|soja|espadon|roquefort|camembert|reblochon|rillettes|saucisson|chorizo|guarana|cafeine|caffeine|rhum|cognac|kirsch|liqueur/,
+};
+
+// Aucun produit au lait cru n'est recommandé, même un fromage à pâte cuite : l'identité du fromage ne peut pas être garantie.
+function texteInterdit(s, categorie) {
+  const m = mots(s), texte = m.join(" ");
+  if (INTERDITS[categorie].test(texte) || INTERDITS_COLLES[categorie].test(m.join(""))) return true;
+  if (categorie !== "aliment") return false;
+  return A_RISQUE.test(texte) || /\b(laits?|cremes?)\b(?:\s+\w+){0,3}?\s+crue?s?\b/.test(texte) || /\braw milk\b/.test(texte);
+}
 
 function interdit(p, categorie) {
   const listes = toutesListes(p);
   if (!listes.length || illisible(p.product_name) || illisible(p.brands) || listes.some(illisible)) return true;
-  const nom = mots(nomComplet(p)).join(" "), nomProduit = mots(p.product_name).join(" ");
-  if (INTERDITS[categorie].test(nom)) return true;
-  if (categorie === "aliment" && A_RISQUE.test(nom)) return true;
-  for (const liste of listes) {
-    const texte = mots(liste).join(" ");
-    if (INTERDITS[categorie].test(texte)) return true;
-    if (categorie === "aliment") {
-      if (A_RISQUE.test(texte)) return true;
-      const laitCru = /\b(laits?|cremes?)\b(?:\s+\w+){0,3}?\s+crue?s?\b/.test(texte) || /\braw milk\b/.test(texte);
-      if (laitCru && !fromageCuitNature(nomProduit, texte)) return true;
-    }
-  }
-  return false;
+  return texteInterdit(nomComplet(p), categorie) || listes.some((l) => texteInterdit(l, categorie));
 }
 const nettoyer = (s, max) => String(s || "").replace(/\p{Cf}/gu, "").replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
 
@@ -63,7 +60,7 @@ function photoSure(u) {
   return typeof u === "string" && /^https:\/\/images\.open(beauty|food)facts\.org\/[\w\/.\-]+$/.test(u) ? u : null;
 }
 
-const mots = (s) => String(s || "").normalize("NFKD").replace(/\p{Cf}/gu, "").replace(/\p{M}/gu, "").toLowerCase().replace(/œ/g, "oe").replace(/æ/g, "ae").split(/[^a-z0-9]+/).filter(Boolean);
+const mots = (s) => String(s || "").normalize("NFKD").replace(/\p{Cf}/gu, "").replace(/\p{M}/gu, "").toLowerCase().replace(/œ/g, "oe").replace(/æ/g, "ae").replace(/([a-z])(\d)/g, "$1 $2").replace(/(\d)([a-z])/g, "$1 $2").split(/[^a-z0-9]+/).filter(Boolean);
 const ingredients = (p) => String(p.ingredients_text_fr || p.ingredients_text || "").trim();
 // Toutes les versions de la liste : un produit est écarté si l'une d'elles pose problème.
 const toutesListes = (p) => [...new Set([p.ingredients_text_fr, p.ingredients_text].map((l) => String(l || "").trim()).filter(Boolean))];
